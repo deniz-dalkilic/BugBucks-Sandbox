@@ -1,6 +1,21 @@
 name: BugBucks
 services:
-  
+  mariadb:
+    image: mariadb:11.7
+    container_name: mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: IdentityDb
+      MYSQL_USER: IdentityDb_user
+      MYSQL_PASSWORD: IdentityDb_password
+    ports:
+      - "3306:3306"
+    networks:
+      - bugbucks-net
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
     container_name: elasticsearch
@@ -55,10 +70,11 @@ services:
     networks:
       - bugbucks-net
       
-      
 networks:
   bugbucks-net:
     driver: bridge
     
+volumes:
+  mariadb_data:
 
       
