@@ -1,26 +1,53 @@
+using Elastic.Channels;
+using Elastic.Ingest.Elasticsearch;
+using Elastic.Ingest.Elasticsearch.DataStreams;
+using Elastic.Serilog.Sinks;
+using LoggingService.Api.Configurations;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//0. Clean default log providers
-builder.Logging.ClearProviders();
+// Bind ElasticsearchOptions from configuration
+var elasticOptions = builder.Configuration
+    .GetSection("ElasticsearchOptions")
+    .Get<ElasticsearchOptions>();
 
-// 1. Add Serilog configuration
-builder.Host.UseSerilog((ctx, lc) =>
-{
-    lc
-        .ReadFrom.Configuration(ctx.Configuration)
-        .Enrich.FromLogContext()
-        .WriteTo.Console(); // We'll expand this later for Elasticsearch
-});
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .WriteTo.Elasticsearch(
+        elasticOptions.NodeUris.Select(uri => new Uri(uri)).ToArray(),
+        opts =>
+        {
+            opts.DataStream = new DataStreamName(
+                elasticOptions.DataStream.Type,
+                elasticOptions.DataStream.Dataset,
+                elasticOptions.DataStream.Namespace);
 
-// 2. Add Services
+            opts.BootstrapMethod = (BootstrapMethod)Enum.Parse(typeof(BootstrapMethod), elasticOptions.BootstrapMethod);
+
+            opts.ConfigureChannel = channelOpts =>
+            {
+                channelOpts.BufferOptions = new BufferOptions
+                {
+                    ExportMaxConcurrency = elasticOptions.BufferOptions.ExportMaxConcurrency
+                };
+            };
+        },
+        transport =>
+        {
+            // transport.Authentication(new BasicAuthentication(username, password)); // Basic Auth
+            // transport.Authentication(new ApiKey(base64EncodedApiKey)); // ApiKey
+        })
+    .CreateLogger();
+
+// Add services to the container.
 builder.Services.AddControllers();
 
-// 3. Build App
 var app = builder.Build();
 
-// 4. Configure Middleware
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment()) app.UseDeveloperExceptionPage();
 
 app.UseRouting();
