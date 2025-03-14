@@ -12,8 +12,6 @@ var elasticOptions = builder.Configuration
     .GetSection("ElasticsearchOptions")
     .Get<ElasticsearchOptions>();
 
-var seqServerUrl = builder.Configuration["Seq:ServerUrl"];
-
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
@@ -42,7 +40,6 @@ Log.Logger = new LoggerConfiguration()
             // transport.Authentication(new BasicAuthentication(username, password)); // Basic Auth
             // transport.Authentication(new ApiKey(base64EncodedApiKey)); // ApiKey
         })
-    .WriteTo.Seq(seqServerUrl)
     .CreateLogger();
 
 // Add services to the container.
