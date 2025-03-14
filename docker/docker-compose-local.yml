@@ -17,7 +17,7 @@ services:
       - mariadb_data:/var/lib/mysql
       
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.28
     container_name: elasticsearch
     environment:
       - discovery.type=single-node
@@ -33,7 +33,7 @@ services:
       - bugbucks-net
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:7.17.0
+    image: docker.elastic.co/kibana/kibana:7.17.28
     container_name: kibana
     ports:
       - "5601:5601"
