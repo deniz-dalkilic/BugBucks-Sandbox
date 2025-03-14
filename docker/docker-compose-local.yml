@@ -45,6 +45,20 @@ services:
     networks:
       - bugbucks-net
 
+  seq:
+    image: datalust/seq:latest
+    container_name: seq
+    ports:
+      - "5341:80"
+    environment:
+      ACCEPT_EULA: "Y"
+    networks:
+      - bugbucks-net
+      
+      
 networks:
   bugbucks-net:
     driver: bridge
+    
+
+      
