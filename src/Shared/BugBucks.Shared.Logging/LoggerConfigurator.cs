@@ -16,13 +16,20 @@ public static class LoggerConfigurator
     {
         // Bind Elasticsearch options from configuration
         var elasticOptions = configuration.GetSection("ElasticsearchOptions").Get<ElasticsearchOptions>();
-        var seqServerUrl = configuration["Seq:ServerUrl"];
+        // Retrieve Seq server URL and enabled flag from configuration
+        var seqSection = configuration.GetSection("Seq");
+        var seqServerUrl = seqSection["ServerUrl"];
+        var seqEnabled = seqSection.GetValue("Enabled", true);
 
-        Log.Logger = new LoggerConfiguration()
+        // Build logger configuration
+        var loggerConfig = new LoggerConfiguration()
             .ReadFrom.Configuration(configuration)
             .Enrich.FromLogContext()
-            .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
-            .WriteTo.Elasticsearch(
+            .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}");
+
+        // Conditionally add Elasticsearch sink if enabled
+        if (elasticOptions.Enabled)
+            loggerConfig = loggerConfig.WriteTo.Elasticsearch(
                 elasticOptions.NodeUris.Select(uri => new Uri(uri)).ToArray(),
                 opts =>
                 {
@@ -30,11 +37,8 @@ public static class LoggerConfigurator
                         elasticOptions.DataStream.Type,
                         elasticOptions.DataStream.Dataset,
                         elasticOptions.DataStream.Namespace);
-
                     opts.BootstrapMethod =
                         (BootstrapMethod)Enum.Parse(typeof(BootstrapMethod), elasticOptions.BootstrapMethod);
-
-
                     opts.ConfigureChannel = channelOpts =>
                     {
                         channelOpts.BufferOptions = new BufferOptions
@@ -47,11 +51,17 @@ public static class LoggerConfigurator
                 {
                     // Uncomment and configure if authentication is needed.
                     // transport.Authentication(new BasicAuthentication(username, password));
-                })
-            .WriteTo.Seq(seqServerUrl)
-            .CreateLogger();
+                });
+
+        // Conditionally add Seq sink if enabled
+        if (seqEnabled) loggerConfig = loggerConfig.WriteTo.Seq(seqServerUrl);
+
+        Log.Logger = loggerConfig.CreateLogger();
     }
 
+    /// <summary>
+    ///     Flushes and closes the global logger.
+    /// </summary>
     public static void CloseLogger()
     {
         Log.CloseAndFlush();
@@ -61,14 +71,16 @@ public static class LoggerConfigurator
 // Elasticsearch configuration options
 public class ElasticsearchOptions
 {
+    /// <summary>
+    ///     Enables or disables the Elasticsearch sink.
+    /// </summary>
+    public bool Enabled { get; set; } = true;
+
     public string[] NodeUris { get; set; }
     public DataStreamOptions DataStream { get; set; }
     public string BootstrapMethod { get; set; }
 
     public BufferOptionsConfig BufferOptions { get; set; }
-
-    // New property for template priority
-    public int TemplatePriority { get; set; }
 }
 
 public class DataStreamOptions
