@@ -15,7 +15,7 @@ services:
       - bugbucks-net
     volumes:
       - mariadb_data:/var/lib/mysql
-      
+  
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.17.28
     container_name: elasticsearch
@@ -43,20 +43,33 @@ services:
       - bugbucks-net
   
   
-  loggingservice:
-    build:
-      context: ../
-      dockerfile: ./src/Services/LoggingService/LoggingService.Api/Dockerfile
+  #  loggingservice:
+  #    build:
+  #      context: ../
+  #      dockerfile: ./src/Services/LoggingService/LoggingService.Api/Dockerfile
+  #
+  #    container_name: loggingservice
+  #    ports:
+  #      - "8080:8080"
+  #    #environment:
+  #    #  - ASPNETCORE_ENVIRONMENT=Development
+  #    depends_on:
+  #      elasticsearch:
+  #        condition: service_healthy  # Wait for Elasticsearch status to become HEALTHY 
+  #      
+  #    networks:
+  #      - bugbucks-net
 
-    container_name: loggingservice
+  vault:
+    image: hashicorp/vault:latest
+    container_name: vault
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: "myroot"
+      VAULT_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
     ports:
-      - "8080:8080"
-    #environment:
-    #  - ASPNETCORE_ENVIRONMENT=Development
-    depends_on:
-      elasticsearch:
-        condition: service_healthy  # Wait for Elasticsearch status to become HEALTHY 
-      
+      - "8200:8200"
+    cap_add:
+      - IPC_LOCK
     networks:
       - bugbucks-net
 
@@ -69,11 +82,11 @@ services:
       ACCEPT_EULA: "Y"
     networks:
       - bugbucks-net
-      
+
 networks:
   bugbucks-net:
     driver: bridge
-    
+
 volumes:
   mariadb_data:
 
