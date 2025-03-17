@@ -15,6 +15,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\Shared\BugBucks.Shared.Logging\BugBucks.Shared.Logging.csproj"/>
         <ProjectReference Include="..\IdentityService.Infrastructure\IdentityService.Infrastructure.csproj"/>
     </ItemGroup>
 
