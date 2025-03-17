@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityService.Domain", "s
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityService.Infrastructure", "src\Services\IdentityService\IdentityService.Infrastructure\IdentityService.Infrastructure.csproj", "{A608015D-6434-4AFA-A4F8-A3B21CECA732}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityService.Tests", "tests\IdentityService.Tests\IdentityService.Tests.csproj", "{5434963C-BB44-4FF3-BFF4-0BEA16F922E4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,5 +44,9 @@ Global
 		{A608015D-6434-4AFA-A4F8-A3B21CECA732}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A608015D-6434-4AFA-A4F8-A3B21CECA732}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A608015D-6434-4AFA-A4F8-A3B21CECA732}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5434963C-BB44-4FF3-BFF4-0BEA16F922E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5434963C-BB44-4FF3-BFF4-0BEA16F922E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5434963C-BB44-4FF3-BFF4-0BEA16F922E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5434963C-BB44-4FF3-BFF4-0BEA16F922E4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
