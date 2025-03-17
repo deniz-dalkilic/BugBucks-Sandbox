@@ -70,9 +70,12 @@ services:
       - "8200:8200"
     cap_add:
       - IPC_LOCK
+    volumes:
+      - vault_data:/vault/file
     networks:
       - bugbucks-net
-
+  
+  
   seq:
     image: datalust/seq:latest
     container_name: seq
@@ -89,5 +92,6 @@ networks:
 
 volumes:
   mariadb_data:
+  vault_data:
 
       
