@@ -1,5 +1,6 @@
 using System.Text;
 using BugBucks.Shared.Logging;
+using BugBucks.Shared.Vault;
 using IdentityService.Domain;
 using IdentityService.Infrastructure.Data;
 using IdentityService.Infrastructure.Services;
@@ -10,6 +11,9 @@ using Serilog;
 using Serilog.Context;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Load Vault secrets using the shared Vault configuration provider
+await VaultConfigurationProvider.LoadSecretsAsync(builder.Configuration);
 
 // Configure global logger using shared logging library and override default providers
 LoggerConfigurator.ConfigureLogger(builder.Configuration);
@@ -52,9 +56,6 @@ builder.Services.AddAuthentication(options =>
         googleOptions.ClientSecret = googleSection["ClientSecret"];
     });
 
-// To use AddGoogle(), ensure you have added the following NuGet package:
-// Microsoft.AspNetCore.Authentication.Google
-
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped(typeof(IAppLogger<>), typeof(AppLogger<>));
 
@@ -81,5 +82,4 @@ app.MapControllers();
 
 app.Run();
 
-// Flush logs on shutdown
 AppDomain.CurrentDomain.ProcessExit += (s, e) => LoggerConfigurator.CloseLogger();
