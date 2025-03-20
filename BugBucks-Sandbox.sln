@@ -14,6 +14,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityService.Infrastruct
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityService.Tests", "tests\IdentityService.Tests\IdentityService.Tests.csproj", "{5434963C-BB44-4FF3-BFF4-0BEA16F922E4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BugBucks.Shared.Vault", "src\Shared\BugBucks.Shared.Vault\BugBucks.Shared.Vault.csproj", "{95662EAE-7C82-4AD4-A5F4-5D3917D0FB61}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,5 +50,9 @@ Global
 		{5434963C-BB44-4FF3-BFF4-0BEA16F922E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5434963C-BB44-4FF3-BFF4-0BEA16F922E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5434963C-BB44-4FF3-BFF4-0BEA16F922E4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{95662EAE-7C82-4AD4-A5F4-5D3917D0FB61}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{95662EAE-7C82-4AD4-A5F4-5D3917D0FB61}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{95662EAE-7C82-4AD4-A5F4-5D3917D0FB61}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{95662EAE-7C82-4AD4-A5F4-5D3917D0FB61}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
