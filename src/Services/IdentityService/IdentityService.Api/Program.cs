@@ -1,6 +1,5 @@
 using System.Text;
 using BugBucks.Shared.Logging;
-using BugBucks.Shared.Vault;
 using IdentityService.Domain;
 using IdentityService.Infrastructure.Data;
 using IdentityService.Infrastructure.Services;
@@ -10,10 +9,14 @@ using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Context;
 
+//using BugBucks.Shared.Vault;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Load Vault secrets using the shared Vault configuration provider
-await VaultConfigurationProvider.LoadSecretsAsync(builder.Configuration);
+//await VaultConfigurationProvider.LoadSecretsAsync(builder.Configuration);
+
+//builder.Services.AddVaultClient();
 
 // Configure global logger using shared logging library and override default providers
 LoggerConfigurator.ConfigureLogger(builder.Configuration);
@@ -79,6 +82,7 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
 
 app.Run();
 

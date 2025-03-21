@@ -1,0 +1,67 @@
+docker exec -it vault vault operator init
+docker exec -it vault vault operator unseal
+docker exec -it vault vault login
+
+
+    Unseal Key 1: 
+p2NtJ3/8S1TLtjAv6B4K5UGDbzRR5ofALeBe9iR/IJJh
+    Unseal Key 2: 
+WG21MkHg1x9UwGZn+UAX2TlzvbHDZEXSe+p3OVuw4xGe
+    Unseal Key 3: 
+AOLZj/dNwpuaIHX1U2OgG7rfE6YI29vvL5cRf0FGDZc1
+    Unseal Key 4: 
+x8vl5W9Mlpi3aBLPwJC9SZ3Zl25J/y/F3KsyFj0YRVe2
+    Unseal Key 5: 
+W3w1ybLkFYWRO/Xvi/2HMCc9UFGAQRyYshMxMqCxg7E2
+
+    Initial Root Token: 
+hvs.VcO6Ox9QFBglx6Q1CVzNkzrK
+
+
+
+#compose.yml
+  vault:
+    image: hashicorp/vault:latest
+    container_name: vault
+    command: server
+    environment:
+      VAULT_ADDR: "http://0.0.0.0:8200"
+    ports:
+      - "8200:8200"
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - ./config.hcl:/vault/config/config.hcl:ro
+      - vault_data:/vault/file
+    networks:
+      - bugbucks-net
+#compose.yml  
+
+#config.hcl
+storage "file" {
+  path = "/vault/file"
+}
+
+listener "tcp" {
+  address     = "0.0.0.0:8200"
+  tls_disable = 1
+}
+
+ui = true
+#config.hcl
+
+#http://localhost:8200/ui/vault/secrets/identityservice/kv/dev
+ API path : /v1/identityservice/data/dev
+ CLI path : -mount="identityservice" "dev"
+{
+  "data": {
+    "DefaultConnection": "server=localhost;database=IdentityDb;user=IdentityDb_user;password=IdentityDb_password;",
+    "GoogleClientId": "your-google-client-id-dev",
+    "GoogleClientSecret": "your-google-client-secret-dev",
+    "JwtAudience": "IdentityServiceClients",
+    "JwtExpiresInMinutes": "60",
+    "JwtIssuer": "IdentityService",
+    "JwtKey": "SuperSuperLongAndHardSecretKey_123456"
+  }
+}
+#http://localhost:8200/ui/vault/secrets/identityservice/kv/dev
