@@ -11,10 +11,16 @@ public class OrderDbContext : DbContext
 
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<ShippingInfo> ShippingInfos => Set<ShippingInfo>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        // Additional Fluent API configurations can be applied here
+
+        // Configure one-to-many relationship: an Order can have many ShippingInfos
+        modelBuilder.Entity<Order>()
+            .HasMany(o => o.ShippingInfos)
+            .WithOne(si => si.Order)
+            .HasForeignKey(si => si.OrderId);
     }
 }

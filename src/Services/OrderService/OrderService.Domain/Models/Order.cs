@@ -14,12 +14,12 @@ public class Order
 
     public int Id { get; set; }
 
-    // Customer data is managed separately; here we store only the CustomerId.
+    // Using CustomerId to associate orders with customers stored elsewhere
     public string CustomerId { get; set; } = string.Empty;
 
     public decimal TotalAmount { get; set; }
     public List<OrderItem> Items { get; set; } = new();
 
-    // Shipping and delivery information
-    public ShippingInfo? ShippingInfo { get; set; }
+    // Change from single ShippingInfo to a collection of ShippingInfos
+    public ICollection<ShippingInfo> ShippingInfos { get; set; } = new List<ShippingInfo>();
 }
