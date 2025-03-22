@@ -16,6 +16,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityService.Tests", "te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BugBucks.Shared.VaultClient", "src\Shared\BugBucks.Shared.VaultClient\BugBucks.Shared.VaultClient.csproj", "{5BF08BEB-4072-46BB-AFFB-85217883C65B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderService.Domain", "src\Services\OrderService\OrderService.Domain\OrderService.Domain.csproj", "{F47AC460-636A-4E24-A7F8-A59C4C9AD91A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -54,5 +56,9 @@ Global
 		{5BF08BEB-4072-46BB-AFFB-85217883C65B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5BF08BEB-4072-46BB-AFFB-85217883C65B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5BF08BEB-4072-46BB-AFFB-85217883C65B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F47AC460-636A-4E24-A7F8-A59C4C9AD91A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F47AC460-636A-4E24-A7F8-A59C4C9AD91A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F47AC460-636A-4E24-A7F8-A59C4C9AD91A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F47AC460-636A-4E24-A7F8-A59C4C9AD91A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
