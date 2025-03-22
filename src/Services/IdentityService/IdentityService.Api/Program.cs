@@ -1,6 +1,6 @@
 using System.Text;
 using BugBucks.Shared.Logging;
-using IdentityService.Domain;
+using IdentityService.Domain.Models;
 using IdentityService.Infrastructure.Data;
 using IdentityService.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;

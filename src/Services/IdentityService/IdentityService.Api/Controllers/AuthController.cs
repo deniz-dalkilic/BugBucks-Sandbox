@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using BugBucks.Shared.Logging;
 using IdentityService.Api.Models;
-using IdentityService.Domain;
+using IdentityService.Domain.Models;
 using IdentityService.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;

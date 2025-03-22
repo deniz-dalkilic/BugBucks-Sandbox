@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace IdentityService.Domain;
+namespace IdentityService.Domain.Models;
 
 /// <summary>
 ///     Custom user entity extending IdentityUser with additional properties.
