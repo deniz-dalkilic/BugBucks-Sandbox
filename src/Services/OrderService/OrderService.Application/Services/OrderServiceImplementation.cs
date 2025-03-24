@@ -1,7 +1,7 @@
 using OrderService.Application.Interfaces;
 using OrderService.Domain.Models;
 
-namespace OrderService.Application;
+namespace OrderService.Application.Services;
 
 public class OrderServiceImplementation : IOrderService
 {
@@ -17,13 +17,14 @@ public class OrderServiceImplementation : IOrderService
         return await _orderRepository.GetAllOrdersAsync();
     }
 
-    public async Task<Order?> GetOrderByIdAsync(int id)
+    public async Task<Order?> GetOrderByExternalIdAsync(Guid externalId)
     {
-        return await _orderRepository.GetOrderByIdAsync(id);
+        return await _orderRepository.GetOrderByExternalIdAsync(externalId);
     }
 
     public async Task<Order> CreateOrderAsync(Order order)
     {
+        // Business logic/validations eklenebilir
         return await _orderRepository.CreateOrderAsync(order);
     }
 
@@ -32,8 +33,9 @@ public class OrderServiceImplementation : IOrderService
         await _orderRepository.UpdateOrderAsync(order);
     }
 
-    public async Task DeleteOrderAsync(int id)
+    public async Task DeleteOrderAsync(Guid externalId)
     {
-        await _orderRepository.DeleteOrderAsync(id);
+        var order = await _orderRepository.GetOrderByExternalIdAsync(externalId);
+        if (order != null) await _orderRepository.DeleteOrderAsync(order);
     }
 }

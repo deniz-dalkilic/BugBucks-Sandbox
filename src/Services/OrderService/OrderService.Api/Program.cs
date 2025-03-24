@@ -1,9 +1,6 @@
 using System.Text;
 using BugBucks.Shared.Logging;
 using BugBucks.Shared.VaultClient.Extensions;
-using IdentityService.Domain.Models;
-using IdentityService.Infrastructure.Services;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OrderService.Infrastructure.Data;
@@ -11,7 +8,6 @@ using Serilog;
 using Serilog.Context;
 
 var builder = WebApplication.CreateBuilder(args);
-
 
 builder.Services.AddVaultClient();
 
@@ -24,12 +20,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<OrderDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-// Configure ASP.NET Core Identity with ApplicationUser
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
-    .AddEntityFrameworkStores<OrderDbContext>()
-    .AddDefaultTokenProviders();
-
-// Configure authentication: JWT and Google external login
+// Configure authentication: JWT only (central IdentityService handles user management)
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = "JwtBearer";
@@ -38,6 +29,8 @@ builder.Services.AddAuthentication(options =>
     .AddJwtBearer("JwtBearer", options =>
     {
         var jwtSection = builder.Configuration.GetSection("Jwt");
+        var key = jwtSection["Key"];
+        if (string.IsNullOrEmpty(key)) throw new ArgumentNullException("JWT signing key is not configured.");
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -46,19 +39,24 @@ builder.Services.AddAuthentication(options =>
             ValidateIssuerSigningKey = true,
             ValidIssuer = jwtSection["Issuer"],
             ValidAudience = jwtSection["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSection["Key"]))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
         };
     });
 
-
-builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddScoped(typeof(IAppLogger<>), typeof(AppLogger<>));
-
 builder.Services.AddControllers();
+
+// Add Swagger/OpenAPI documentation
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment()) app.UseDeveloperExceptionPage();
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 // Correlation ID middleware for logging
 app.Use(async (context, next) =>
@@ -71,8 +69,10 @@ app.Use(async (context, next) =>
 });
 
 app.UseRouting();
+
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();

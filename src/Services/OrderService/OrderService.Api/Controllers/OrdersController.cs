@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OrderService.Application;
+using OrderService.Application.Interfaces;
 using OrderService.Domain.Models;
 
 namespace OrderService.Api.Controllers;
@@ -25,12 +25,13 @@ public class OrdersController : ControllerBase
         return Ok(orders);
     }
 
-    // GET: api/orders/{id}
-    [HttpGet("{id:int}")]
-    public async Task<ActionResult<Order>> GetOrder(int id)
+    // GET: api/orders/{externalId}
+    [HttpGet("{externalId:guid}")]
+    public async Task<ActionResult<Order>> GetOrder(Guid externalId)
     {
-        var order = await _orderService.GetOrderByIdAsync(id);
-        if (order == null) return NotFound();
+        var order = await _orderService.GetOrderByExternalIdAsync(externalId);
+        if (order == null)
+            return NotFound();
         return Ok(order);
     }
 
@@ -38,30 +39,35 @@ public class OrdersController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Order>> CreateOrder([FromBody] Order order)
     {
+        if (order.ExternalId == Guid.Empty) order.ExternalId = Guid.NewGuid();
         var createdOrder = await _orderService.CreateOrderAsync(order);
-        return CreatedAtAction(nameof(GetOrder), new { id = createdOrder.Id }, createdOrder);
+        return CreatedAtAction(nameof(GetOrder), new { externalId = createdOrder.ExternalId }, createdOrder);
     }
 
-    // PUT: api/orders/{id}
-    [HttpPut("{id:int}")]
-    public async Task<IActionResult> UpdateOrder(int id, [FromBody] Order order)
+    // PUT: api/orders/{externalId}
+    [HttpPut("{externalId:guid}")]
+    public async Task<IActionResult> UpdateOrder(Guid externalId, [FromBody] Order order)
     {
-        if (id != order.Id) return BadRequest("Order ID mismatch");
+        if (externalId != order.ExternalId)
+            return BadRequest("Order external ID mismatch");
 
-        var existingOrder = await _orderService.GetOrderByIdAsync(id);
-        if (existingOrder == null) return NotFound();
+        var existingOrder = await _orderService.GetOrderByExternalIdAsync(externalId);
+        if (existingOrder == null)
+            return NotFound();
 
         await _orderService.UpdateOrderAsync(order);
         return Ok(order);
     }
 
-    // DELETE: api/orders/{id}
-    [HttpDelete("{id:int}")]
-    public async Task<IActionResult> DeleteOrder(int id)
+    // DELETE: api/orders/{externalId}
+    [HttpDelete("{externalId:guid}")]
+    public async Task<IActionResult> DeleteOrder(Guid externalId)
     {
-        var existingOrder = await _orderService.GetOrderByIdAsync(id);
-        if (existingOrder == null) return NotFound();
-        await _orderService.DeleteOrderAsync(id);
+        var order = await _orderService.GetOrderByExternalIdAsync(externalId);
+        if (order == null)
+            return NotFound();
+
+        await _orderService.DeleteOrderAsync(externalId);
         return NoContent();
     }
 }

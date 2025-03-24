@@ -16,12 +16,17 @@ public class OrderRepository : IOrderRepository
 
     public async Task<IEnumerable<Order>> GetAllOrdersAsync()
     {
-        return await _context.Orders.Include(o => o.Items).ToListAsync();
+        return await _context.Orders
+            .Include(o => o.Items)
+            .Include(o => o.ShippingInfos)
+            .ToListAsync();
     }
 
     public async Task<Order?> GetOrderByIdAsync(int id)
     {
-        return await _context.Orders.Include(o => o.Items)
+        return await _context.Orders
+            .Include(o => o.Items)
+            .Include(o => o.ShippingInfos)
             .FirstOrDefaultAsync(o => o.Id == id);
     }
 
@@ -38,13 +43,19 @@ public class OrderRepository : IOrderRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task DeleteOrderAsync(int id)
+    public async Task<Order?> GetOrderByExternalIdAsync(Guid externalId)
     {
-        var order = await _context.Orders.FindAsync(id);
-        if (order != null)
-        {
-            _context.Orders.Remove(order);
-            await _context.SaveChangesAsync();
-        }
+        return await _context.Orders
+            .Include(o => o.Items)
+            .Include(o => o.ShippingInfos)
+            .FirstOrDefaultAsync(o => o.ExternalId == externalId);
+    }
+
+    public async Task DeleteOrderAsync(Order order)
+    {
+        // Soft-delete: mark as deleted
+        order.IsDeleted = true;
+        _context.Orders.Update(order);
+        await _context.SaveChangesAsync();
     }
 }
