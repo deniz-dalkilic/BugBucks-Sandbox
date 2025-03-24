@@ -1,11 +1,8 @@
 using System.Text;
 using BugBucks.Shared.Logging;
-using BugBucks.Shared.VaultClient;
 using BugBucks.Shared.VaultClient.Extensions;
 using IdentityService.Domain.Models;
 using IdentityService.Infrastructure.Services;
-using OrderService.Domain.Models;
-using OrderService.Infrastructure;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -34,30 +31,25 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 
 // Configure authentication: JWT and Google external login
 builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = "JwtBearer";
-    options.DefaultChallengeScheme = "JwtBearer";
-})
-.AddJwtBearer("JwtBearer", options =>
-{
-    var jwtSection = builder.Configuration.GetSection("Jwt");
-    options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSection["Issuer"],
-        ValidAudience = jwtSection["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSection["Key"]))
-    };
-})
-.AddGoogle(googleOptions =>
-{
-    var googleSection = builder.Configuration.GetSection("Authentication:Google");
-    googleOptions.ClientId = googleSection["ClientId"];
-    googleOptions.ClientSecret = googleSection["ClientSecret"];
-});
+        options.DefaultAuthenticateScheme = "JwtBearer";
+        options.DefaultChallengeScheme = "JwtBearer";
+    })
+    .AddJwtBearer("JwtBearer", options =>
+    {
+        var jwtSection = builder.Configuration.GetSection("Jwt");
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSection["Issuer"],
+            ValidAudience = jwtSection["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSection["Key"]))
+        };
+    });
+
 
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped(typeof(IAppLogger<>), typeof(AppLogger<>));
@@ -66,10 +58,7 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseDeveloperExceptionPage();
-}
+if (app.Environment.IsDevelopment()) app.UseDeveloperExceptionPage();
 
 // Correlation ID middleware for logging
 app.Use(async (context, next) =>
