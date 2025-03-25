@@ -1,15 +1,16 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
+using PaymentService.Infrastructure.Data;
 
 namespace OrderService.Infrastructure.Data;
 
 /// <summary>
 ///     Design-time factory for OrderDbContext to support EF Core migrations.
 /// </summary>
-public class OrderDbContextFactory : IDesignTimeDbContextFactory<OrderDbContext>
+public class OrderDbContextFactory : IDesignTimeDbContextFactory<PaymentDbContext>
 {
-    public OrderDbContext CreateDbContext(string[] args)
+    public PaymentDbContext CreateDbContext(string[] args)
     {
         // Build configuration manually from appsettings.json (ensure the file is copied to output)
         var configuration = new ConfigurationBuilder()
@@ -18,13 +19,13 @@ public class OrderDbContextFactory : IDesignTimeDbContextFactory<OrderDbContext>
             .AddJsonFile("appsettings.Development.json", true)
             .Build();
 
-        var optionsBuilder = new DbContextOptionsBuilder<OrderDbContext>();
+        var optionsBuilder = new DbContextOptionsBuilder<PaymentDbContext>();
 
         // Get connection string from configuration ("DefaultConnection")
         var connectionString = configuration.GetConnectionString("DefaultConnection");
 
         optionsBuilder.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
 
-        return new OrderDbContext(optionsBuilder.Options);
+        return new PaymentDbContext(optionsBuilder.Options);
     }
 }
