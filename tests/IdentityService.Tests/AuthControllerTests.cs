@@ -20,7 +20,7 @@ public class AuthControllerTests : IClassFixture<WebApplicationFactory<EntryPoin
     public async Task Register_ShouldReturnOk_WhenUserIsRegistered()
     {
         // Arrange
-        var registerModel = new RegisterModel
+        var registerModel = new RegisterRequest
         {
             UserName = "testuser3",
             Email = "testuser3@example.com",
@@ -43,7 +43,7 @@ public class AuthControllerTests : IClassFixture<WebApplicationFactory<EntryPoin
     {
         // Arrange
         // Create a test user first.
-        var registerModel = new RegisterModel
+        var registerModel = new RegisterRequest
         {
             UserName = "loginuser2",
             Email = "loginuser2@example.com",

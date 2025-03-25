@@ -1,38 +1,37 @@
 using System.Text;
 using BugBucks.Shared.Logging;
+using BugBucks.Shared.VaultClient.Extensions;
+using IdentityService.Application.Interfaces;
+using IdentityService.Application.Services;
 using IdentityService.Domain.Models;
 using IdentityService.Infrastructure.Data;
-using IdentityService.Infrastructure.Services;
+using IdentityService.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Context;
 
-//using BugBucks.Shared.Vault;
-
 var builder = WebApplication.CreateBuilder(args);
 
-// Load Vault secrets using the shared Vault configuration provider
-//await VaultConfigurationProvider.LoadSecretsAsync(builder.Configuration);
+// Load Vault secrets
+builder.Services.AddVaultClient();
 
-//builder.Services.AddVaultClient();
-
-// Configure global logger using shared logging library and override default providers
+// Configure global logger
 LoggerConfigurator.ConfigureLogger(builder.Configuration);
 builder.Host.UseSerilog();
 
-// Configure DbContext with MySQL using Pomelo
+// Configure DbContext with MySQL (Pomelo)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-// Configure ASP.NET Core Identity with ApplicationUser
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+// Configure ASP.NET Core Identity with ApplicationUser using integer primary key
+builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-// Configure authentication: JWT and (optionally) Google external login
+// Configure JWT authentication (centralized IdentityService's JWT settings)
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = "JwtBearer";
@@ -41,6 +40,8 @@ builder.Services.AddAuthentication(options =>
     .AddJwtBearer("JwtBearer", options =>
     {
         var jwtSection = builder.Configuration.GetSection("Jwt");
+        var key = jwtSection["Key"];
+        if (string.IsNullOrEmpty(key)) throw new ArgumentNullException("JWT signing key is not configured.");
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -49,26 +50,29 @@ builder.Services.AddAuthentication(options =>
             ValidateIssuerSigningKey = true,
             ValidIssuer = jwtSection["Issuer"],
             ValidAudience = jwtSection["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtSection["Key"]))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
         };
-    }).AddGoogle(googleOptions =>
-    {
-        var googleSection = builder.Configuration.GetSection("Authentication:Google");
-        googleOptions.ClientId = googleSection["ClientId"];
-        googleOptions.ClientSecret = googleSection["ClientSecret"];
     });
 
-builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddScoped(typeof(IAppLogger<>), typeof(AppLogger<>));
-
 builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// Dependency injection for application layer services
+builder.Services.AddScoped<IApplicationUserRepository, ApplicationUserRepository>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IApplicationUserRepository, ApplicationUserRepository>(); // İhtiyaç duyulan diğer servisler
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment()) app.UseDeveloperExceptionPage();
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
-// Correlation ID middleware for logging
+// Correlation ID middleware
 app.Use(async (context, next) =>
 {
     var correlationId = context.Request.Headers["X-Correlation-ID"].FirstOrDefault() ?? Guid.NewGuid().ToString();
@@ -82,8 +86,6 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-
-
 app.Run();
 
 AppDomain.CurrentDomain.ProcessExit += (s, e) => LoggerConfigurator.CloseLogger();

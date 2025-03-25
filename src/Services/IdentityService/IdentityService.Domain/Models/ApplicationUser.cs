@@ -2,18 +2,16 @@ using Microsoft.AspNetCore.Identity;
 
 namespace IdentityService.Domain.Models;
 
-/// <summary>
-///     Custom user entity extending IdentityUser with additional properties.
-/// </summary>
-public class ApplicationUser : IdentityUser
+// Use IdentityUser<int> for internal primary key as integer
+public class ApplicationUser : IdentityUser<int>
 {
-    /// <summary>
-    ///     Gets or sets the full name of the user.
-    /// </summary>
-    public string FullName { get; set; }
+    // External identifier used for API calls
+    public Guid ExternalId { get; set; } = Guid.NewGuid();
 
-    /// <summary>
-    ///     Gets or sets the date of birth of the user.
-    /// </summary>
-    public DateTime? DateOfBirth { get; set; }
+    // Soft delete flag
+    public bool IsDeleted { get; set; } = false;
+
+    // Additional properties
+    public string FullName { get; set; } = string.Empty;
+    public DateTime DateOfBirth { get; set; }
 }

@@ -1,138 +1,76 @@
-using System.Security.Claims;
-using BugBucks.Shared.Logging;
 using IdentityService.Api.Models;
+using IdentityService.Application.Interfaces;
 using IdentityService.Domain.Models;
-using IdentityService.Infrastructure.Services;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IdentityService.Api.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
+[ApiController]
 public class AuthController : ControllerBase
 {
-    private readonly IAppLogger<AuthController> _logger;
-    private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly ITokenService _tokenService;
-    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IApplicationUserRepository _userRepository;
 
-    public AuthController(
-        UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager,
-        ITokenService tokenService,
-        IAppLogger<AuthController> logger)
+    public AuthController(ITokenService tokenService, IApplicationUserRepository userRepository)
     {
-        _userManager = userManager;
-        _signInManager = signInManager;
         _tokenService = tokenService;
-        _logger = logger;
-    }
-
-    [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterModel model)
-    {
-        _logger.LogInformation("Register endpoint called for user {UserName}", model.UserName);
-
-        var user = new ApplicationUser
-        {
-            UserName = model.UserName,
-            Email = model.Email,
-            FullName = model.FullName,
-            DateOfBirth = model.DateOfBirth
-        };
-
-        var result = await _userManager.CreateAsync(user, model.Password);
-        if (!result.Succeeded)
-        {
-            _logger.LogError(null, "User registration failed for {UserName}", model.UserName);
-            return BadRequest(result.Errors);
-        }
-
-        _logger.LogInformation("User {UserName} registered successfully", model.UserName);
-        return Ok("User registered successfully.");
+        _userRepository = userRepository;
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginModel model)
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        _logger.LogInformation("Login attempt for user {UserName}", model.UserName);
+        if (string.IsNullOrWhiteSpace(request.UserNameOrEmail) || string.IsNullOrWhiteSpace(request.Password))
+            return BadRequest("UserNameOrEmail and Password are required.");
 
-        var user = await _userManager.FindByNameAsync(model.UserName);
-        if (user == null)
-        {
-            _logger.LogError(null, "User {UserName} not found", model.UserName);
-            return Unauthorized("Invalid credentials.");
-        }
+        ApplicationUser? user = null;
 
-        var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
-        if (!result.Succeeded)
-        {
-            _logger.LogError(null, "Invalid credentials for user {UserName}", model.UserName);
-            return Unauthorized("Invalid credentials.");
-        }
-
-        var token = _tokenService.GenerateToken(user);
-        _logger.LogInformation("User {UserName} logged in successfully", model.UserName);
-        return Ok(new { Token = token });
-    }
-
-    [HttpGet("external-login")]
-    public IActionResult ExternalLogin(string provider, string returnUrl = null)
-    {
-        _logger.LogInformation("External login initiated for provider {Provider}", provider);
-        var redirectUrl = Url.Action("ExternalLoginCallback", "Auth", new { ReturnUrl = returnUrl });
-        var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
-        return Challenge(properties, provider);
-    }
-
-    [HttpGet("external-login-callback")]
-    public async Task<IActionResult> ExternalLoginCallback(string returnUrl = null, string remoteError = null)
-    {
-        if (!string.IsNullOrEmpty(remoteError))
-        {
-            _logger.LogError(null, "Error from external provider: {Error}", remoteError);
-            return RedirectToAction("Login");
-        }
-
-        var info = await _signInManager.GetExternalLoginInfoAsync();
-        if (info == null)
-        {
-            _logger.LogError(null, "Failed to load external login information.");
-            return RedirectToAction("Login");
-        }
-
-        // Sign in user with external provider
-        var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, false, true);
-        if (result.Succeeded)
-        {
-            _logger.LogInformation("User logged in with {Provider} provider.", info.LoginProvider);
-            var user = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
-            var token = _tokenService.GenerateToken(user);
-            return Ok(new { Token = token });
-        }
+        // Check if input is an email address based on the presence of '@'
+        if (request.UserNameOrEmail.Contains("@"))
+            // Search by email
+            user = await _userRepository.GetUserByEmailAsync(request.UserNameOrEmail);
         else
+            // Search by username
+            user = await _userRepository.GetUserByUserNameAsync(request.UserNameOrEmail);
+
+        if (user == null)
+            return Unauthorized("User not found.");
+
+        // For demonstration only: compare passwords directly (in production, use proper hashing/UserManager)
+        if (user.PasswordHash != request.Password)
+            return Unauthorized("Invalid credentials.");
+
+        var token = await _tokenService.GenerateTokenAsync(user);
+        return Ok(new { token });
+    }
+
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.UserName) ||
+            string.IsNullOrWhiteSpace(request.Email) ||
+            string.IsNullOrWhiteSpace(request.Password))
+            return BadRequest("Username, Email and Password are required.");
+
+        // Check if a user already exists by email or username
+        var existingUser = await _userRepository.GetUserByEmailAsync(request.Email)
+                           ?? await _userRepository.GetUserByUserNameAsync(request.UserName);
+
+        if (existingUser != null)
+            return BadRequest("User with given email or username already exists.");
+
+        var newUser = new ApplicationUser
         {
-            // If user doesn't exist, create and sign in the user
-            var email = info.Principal.FindFirstValue(ClaimTypes.Email);
-            var userName = info.Principal.FindFirstValue(ClaimTypes.Name) ?? email;
-            var user = new ApplicationUser { UserName = userName, Email = email };
+            UserName = request.UserName,
+            Email = request.Email,
+            FullName = request.FullName,
+            DateOfBirth = request.DateOfBirth,
+            // For demo purposes, setting the PasswordHash directly (in production, use proper hashing via UserManager)
+            PasswordHash = request.Password
+        };
 
-            var createResult = await _userManager.CreateAsync(user);
-            if (createResult.Succeeded)
-            {
-                createResult = await _userManager.AddLoginAsync(user, info);
-                if (createResult.Succeeded)
-                {
-                    await _signInManager.SignInAsync(user, false);
-                    _logger.LogInformation("User created and logged in with {Provider} provider.", info.LoginProvider);
-                    var token = _tokenService.GenerateToken(user);
-                    return Ok(new { Token = token });
-                }
-            }
-
-            _logger.LogError(null, "External login failed.");
-            return BadRequest("External login failed.");
-        }
+        var createdUser = await _userRepository.CreateUserAsync(newUser);
+        return CreatedAtAction(nameof(UsersController.GetUser), "Users", new { id = createdUser.Id }, createdUser);
     }
 }
