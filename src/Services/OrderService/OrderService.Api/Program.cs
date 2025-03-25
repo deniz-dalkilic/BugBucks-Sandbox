@@ -1,14 +1,20 @@
 using System.Text;
 using BugBucks.Shared.Logging;
 using BugBucks.Shared.VaultClient.Extensions;
+using IdentityService.Api.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using OrderService.Application.Interfaces;
+using OrderService.Application.Services;
 using OrderService.Infrastructure.Data;
+using OrderService.Infrastructure.Repositories;
 using Serilog;
 using Serilog.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Load Vault secrets
 builder.Services.AddVaultClient();
 
 // Configure global logger using shared logging library and override default providers
@@ -20,7 +26,8 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<OrderDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-// Configure authentication: JWT only (central IdentityService handles user management)
+
+// Configure JWT authentication 
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = "JwtBearer";
@@ -30,7 +37,8 @@ builder.Services.AddAuthentication(options =>
     {
         var jwtSection = builder.Configuration.GetSection("Jwt");
         var key = jwtSection["Key"];
-        if (string.IsNullOrEmpty(key)) throw new ArgumentNullException("JWT signing key is not configured.");
+        if (string.IsNullOrEmpty(key))
+            throw new ArgumentNullException("JWT signing key is not configured.");
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -44,10 +52,21 @@ builder.Services.AddAuthentication(options =>
     });
 
 builder.Services.AddControllers();
-
-// Add Swagger/OpenAPI documentation
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IOrderService, OrderServiceImplementation>();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("OwnerOrAdmin", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.AddRequirements(new OwnerOrAdminRequirement());
+    });
+});
+builder.Services.AddSingleton<IAuthorizationHandler, OwnerOrAdminHandler>();
 
 var app = builder.Build();
 
@@ -69,10 +88,8 @@ app.Use(async (context, next) =>
 });
 
 app.UseRouting();
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
