@@ -1,0 +1,8 @@
+CREATE
+DATABASE IF NOT EXISTS PaymentDb;
+CREATE
+USER IF NOT EXISTS 'PaymentDb_user'@'%' IDENTIFIED BY 'PaymentDb_password';
+GRANT ALL PRIVILEGES ON PaymentDb.* TO
+'PaymentDb_user'@'%';
+FLUSH
+PRIVILEGES;

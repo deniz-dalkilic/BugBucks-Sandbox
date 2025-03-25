@@ -16,6 +16,8 @@ services:
     volumes:
       - mariadb_data:/var/lib/mysql
       - ./docker/orderdb-init.sql:/docker-entrypoint-initdb.d/orderdb-init.sql
+      - ./docker/paymentdb-init.sql:/docker-entrypoint-initdb.d/paymentdb-init.sql
+  
   
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.17.28
