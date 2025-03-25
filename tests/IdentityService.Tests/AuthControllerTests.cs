@@ -53,9 +53,9 @@ public class AuthControllerTests : IClassFixture<WebApplicationFactory<EntryPoin
         };
         await _client.PostAsJsonAsync("/api/auth/register", registerModel);
 
-        var loginModel = new LoginModel
+        var loginModel = new LoginRequest
         {
-            UserName = "loginuser2",
+            UserNameOrEmail = "loginuser2",
             Password = "Test@123"
         };
 

@@ -17,7 +17,7 @@ public class TokenService : ITokenService
         _configuration = configuration;
     }
 
-    public Task<string> GenerateTokenAsync(ApplicationUser user)
+    public Task<string> GenerateTokenAsync(ApplicationUser user, IList<string> roles)
     {
         var jwtSection = _configuration.GetSection("Jwt");
         var key = jwtSection["Key"];
@@ -28,13 +28,16 @@ public class TokenService : ITokenService
         var audience = jwtSection["Audience"];
         var expiresInMinutes = Convert.ToDouble(jwtSection["ExpiresInMinutes"]);
 
-        var claims = new[]
+        var claims = new List<Claim>
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim("ExternalId", user.ExternalId.ToString()),
-            new Claim(JwtRegisteredClaimNames.UniqueName, user.UserName)
-            // Diğer claim'ler eklenebilir
+            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new("ExternalId", user.ExternalId.ToString()),
+            new(JwtRegisteredClaimNames.UniqueName, user.UserName)
+            // Additional claims can be added here
         };
+
+        // Add role claims
+        foreach (var role in roles) claims.Add(new Claim(ClaimTypes.Role, role));
 
         var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
         var signingCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
@@ -44,7 +47,8 @@ public class TokenService : ITokenService
             audience,
             claims,
             expires: DateTime.UtcNow.AddMinutes(expiresInMinutes),
-            signingCredentials: signingCredentials);
+            signingCredentials: signingCredentials
+        );
 
         var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
         return Task.FromResult(tokenString);

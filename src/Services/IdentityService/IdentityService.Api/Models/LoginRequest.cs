@@ -1,7 +1,10 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace IdentityService.Api.Models;
 
 public class LoginRequest
 {
-    public string UserNameOrEmail { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
+    [Required] public string UserNameOrEmail { get; set; } = string.Empty;
+
+    [Required] public string Password { get; set; } = string.Empty;
 }

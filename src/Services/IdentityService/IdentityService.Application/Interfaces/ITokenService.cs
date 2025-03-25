@@ -4,5 +4,6 @@ namespace IdentityService.Application.Interfaces;
 
 public interface ITokenService
 {
-    Task<string> GenerateTokenAsync(ApplicationUser user);
+    // Updated to include roles parameter
+    Task<string> GenerateTokenAsync(ApplicationUser user, IList<string> roles);
 }

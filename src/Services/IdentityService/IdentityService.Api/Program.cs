@@ -1,11 +1,13 @@
 using System.Text;
 using BugBucks.Shared.Logging;
 using BugBucks.Shared.VaultClient.Extensions;
+using IdentityService.Api.Authorization;
 using IdentityService.Application.Interfaces;
 using IdentityService.Application.Services;
 using IdentityService.Domain.Models;
 using IdentityService.Infrastructure.Data;
 using IdentityService.Infrastructure.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -14,7 +16,6 @@ using Serilog.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load Vault secrets
 builder.Services.AddVaultClient();
 
 // Configure global logger
@@ -31,7 +32,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-// Configure JWT authentication (centralized IdentityService's JWT settings)
+// Configure JWT authentication (using IdentityService JWT settings)
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = "JwtBearer";
@@ -41,7 +42,8 @@ builder.Services.AddAuthentication(options =>
     {
         var jwtSection = builder.Configuration.GetSection("Jwt");
         var key = jwtSection["Key"];
-        if (string.IsNullOrEmpty(key)) throw new ArgumentNullException("JWT signing key is not configured.");
+        if (string.IsNullOrEmpty(key))
+            throw new ArgumentNullException("JWT signing key is not configured.");
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -58,10 +60,21 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Dependency injection for application layer services
+// Dependency injection for application services and repository
 builder.Services.AddScoped<IApplicationUserRepository, ApplicationUserRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddScoped<IApplicationUserRepository, ApplicationUserRepository>(); // İhtiyaç duyulan diğer servisler
+builder.Services.AddScoped<IApplicationUserService, ApplicationUserService>();
+
+// Register the custom authorization policy and handler before building the app
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("OwnerOrAdmin", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.AddRequirements(new OwnerOrAdminRequirement());
+    });
+});
+builder.Services.AddSingleton<IAuthorizationHandler, OwnerOrAdminHandler>();
 
 var app = builder.Build();
 
@@ -72,7 +85,19 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Correlation ID middleware
+// Seed default roles (User, Admin, Manager, Support, Customer)
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
+
+    var roleNames = new[] { "User", "Admin", "Manager", "Support", "Customer" };
+
+    foreach (var roleName in roleNames)
+        if (!await roleManager.RoleExistsAsync(roleName))
+            await roleManager.CreateAsync(new IdentityRole<int>(roleName));
+}
+
+// Correlation ID middleware for logging
 app.Use(async (context, next) =>
 {
     var correlationId = context.Request.Headers["X-Correlation-ID"].FirstOrDefault() ?? Guid.NewGuid().ToString();
@@ -86,6 +111,7 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
 app.Run();
 
 AppDomain.CurrentDomain.ProcessExit += (s, e) => LoggerConfigurator.CloseLogger();

@@ -2,14 +2,18 @@ using Microsoft.AspNetCore.Identity;
 
 namespace IdentityService.Domain.Models;
 
-// Use IdentityUser<int> for internal primary key as integer
+// Using IdentityUser<int> for internal primary key (int)
 public class ApplicationUser : IdentityUser<int>
 {
-    // External identifier used for API calls
+    // External identifier for API usage
     public Guid ExternalId { get; set; } = Guid.NewGuid();
 
-    // Soft delete flag
+    // Soft-delete flag
     public bool IsDeleted { get; set; } = false;
+
+    // Audit fields
+    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+    public DateTime? UpdatedDate { get; set; }
 
     // Additional properties
     public string FullName { get; set; } = string.Empty;

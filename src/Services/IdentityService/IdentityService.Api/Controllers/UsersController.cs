@@ -16,18 +16,10 @@ public class UsersController : ControllerBase
         _userRepository = userRepository;
     }
 
-    // GET: api/users/{id}
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetUser(int id)
-    {
-        var user = await _userRepository.GetUserByIdAsync(id);
-        if (user == null)
-            return NotFound();
-        return Ok(user);
-    }
-
     // GET: api/users/{externalId}
+    // Only the resource owner or an admin can access this endpoint.
     [HttpGet("{externalId:guid}")]
+    [Authorize(Policy = "OwnerOrAdmin")]
     public async Task<IActionResult> GetUser(Guid externalId)
     {
         var user = await _userRepository.GetUserByExternalIdAsync(externalId);
@@ -36,14 +28,16 @@ public class UsersController : ControllerBase
         return Ok(user);
     }
 
-    // DELETE: api/users/{id}
-    // Soft-delete: mark the user as deleted
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteUser(int id)
+    // DELETE: api/users/{externalId}
+    // Soft-delete: marks the user as deleted.
+    [HttpDelete("{externalId:guid}")]
+    [Authorize(Policy = "OwnerOrAdmin")]
+    public async Task<IActionResult> DeleteUser(Guid externalId)
     {
-        var user = await _userRepository.GetUserByIdAsync(id);
+        var user = await _userRepository.GetUserByExternalIdAsync(externalId);
         if (user == null)
             return NotFound();
+
         await _userRepository.SoftDeleteUserAsync(user);
         return NoContent();
     }

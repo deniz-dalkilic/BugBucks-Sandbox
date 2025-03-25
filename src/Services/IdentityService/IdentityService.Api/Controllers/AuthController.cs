@@ -1,7 +1,9 @@
 using IdentityService.Api.Models;
 using IdentityService.Application.Interfaces;
 using IdentityService.Domain.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace IdentityService.Api.Controllers;
 
@@ -9,68 +11,82 @@ namespace IdentityService.Api.Controllers;
 [ApiController]
 public class AuthController : ControllerBase
 {
+    private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly ITokenService _tokenService;
-    private readonly IApplicationUserRepository _userRepository;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public AuthController(ITokenService tokenService, IApplicationUserRepository userRepository)
+    public AuthController(
+        UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager,
+        ITokenService tokenService)
     {
+        _userManager = userManager;
+        _signInManager = signInManager;
         _tokenService = tokenService;
-        _userRepository = userRepository;
-    }
-
-    [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest request)
-    {
-        if (string.IsNullOrWhiteSpace(request.UserNameOrEmail) || string.IsNullOrWhiteSpace(request.Password))
-            return BadRequest("UserNameOrEmail and Password are required.");
-
-        ApplicationUser? user = null;
-
-        // Check if input is an email address based on the presence of '@'
-        if (request.UserNameOrEmail.Contains("@"))
-            // Search by email
-            user = await _userRepository.GetUserByEmailAsync(request.UserNameOrEmail);
-        else
-            // Search by username
-            user = await _userRepository.GetUserByUserNameAsync(request.UserNameOrEmail);
-
-        if (user == null)
-            return Unauthorized("User not found.");
-
-        // For demonstration only: compare passwords directly (in production, use proper hashing/UserManager)
-        if (user.PasswordHash != request.Password)
-            return Unauthorized("Invalid credentials.");
-
-        var token = await _tokenService.GenerateTokenAsync(user);
-        return Ok(new { token });
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
-        if (string.IsNullOrWhiteSpace(request.UserName) ||
-            string.IsNullOrWhiteSpace(request.Email) ||
-            string.IsNullOrWhiteSpace(request.Password))
-            return BadRequest("Username, Email and Password are required.");
+        if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        // Check if a user already exists by email or username
-        var existingUser = await _userRepository.GetUserByEmailAsync(request.Email)
-                           ?? await _userRepository.GetUserByUserNameAsync(request.UserName);
-
-        if (existingUser != null)
-            return BadRequest("User with given email or username already exists.");
-
-        var newUser = new ApplicationUser
+        var user = new ApplicationUser
         {
             UserName = request.UserName,
             Email = request.Email,
             FullName = request.FullName,
             DateOfBirth = request.DateOfBirth,
-            // For demo purposes, setting the PasswordHash directly (in production, use proper hashing via UserManager)
-            PasswordHash = request.Password
+            ExternalId = Guid.NewGuid(),
+            CreatedDate = DateTime.UtcNow
         };
 
-        var createdUser = await _userRepository.CreateUserAsync(newUser);
-        return CreatedAtAction(nameof(UsersController.GetUser), "Users", new { id = createdUser.Id }, createdUser);
+        var result = await _userManager.CreateAsync(user, request.Password);
+        if (!result.Succeeded) return BadRequest(result.Errors);
+
+        // Assign default role "User"
+        await _userManager.AddToRoleAsync(user, "User");
+
+        return CreatedAtAction(nameof(GetUser), new { externalId = user.ExternalId },
+            new { user.ExternalId, user.UserName, user.Email });
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    {
+        if (string.IsNullOrEmpty(request.UserNameOrEmail) || string.IsNullOrEmpty(request.Password))
+            return BadRequest("UserNameOrEmail and Password are required.");
+
+        ApplicationUser user = null;
+        if (request.UserNameOrEmail.Contains("@"))
+            user = await _userManager.FindByEmailAsync(request.UserNameOrEmail);
+        else
+            user = await _userManager.FindByNameAsync(request.UserNameOrEmail);
+
+        if (user == null) return Unauthorized("User not found.");
+
+        var signInResult = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
+        if (!signInResult.Succeeded) return Unauthorized("Invalid credentials.");
+
+        // Retrieve user roles from UserManager
+        var roles = await _userManager.GetRolesAsync(user);
+        var token = await _tokenService.GenerateTokenAsync(user, roles);
+        return Ok(new { token });
+    }
+
+    [HttpGet("user/{externalId:guid}")]
+    public async Task<IActionResult> GetUser(Guid externalId)
+    {
+        // Retrieve the currently authenticated user's ExternalId from claims
+        var currentUserExternalIdClaim = User.FindFirst("ExternalId")?.Value;
+        if (!Guid.TryParse(currentUserExternalIdClaim, out var currentUserExternalId)) return Unauthorized();
+
+        var user = await _userManager.Users.FirstOrDefaultAsync(u => u.ExternalId == externalId && !u.IsDeleted);
+        if (user == null)
+            return NotFound();
+
+        // If the user is not an Admin, they can only access their own data
+        if (!User.IsInRole("Admin") && currentUserExternalId != externalId) return Forbid();
+
+        return Ok(user);
     }
 }
