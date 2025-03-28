@@ -7,8 +7,17 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.3"/>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.3"/>
+        <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.6.1"/>
+        <PackageReference Include="Serilog" Version="4.2.0"/>
+        <PackageReference Include="Serilog.Extensions.Hosting" Version="9.0.0"/>
         <PackageReference Include="Yarp.ReverseProxy" Version="2.3.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Shared\BugBucks.Shared.Logging\BugBucks.Shared.Logging.csproj"/>
+        <ProjectReference Include="..\..\Shared\BugBucks.Shared.VaultClient\BugBucks.Shared.VaultClient.csproj"/>
     </ItemGroup>
 
 </Project>

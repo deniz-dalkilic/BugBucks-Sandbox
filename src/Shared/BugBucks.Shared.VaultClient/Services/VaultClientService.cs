@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.Token;
@@ -43,7 +42,7 @@ public class VaultClientService : IVaultClientService
             IDictionary<string, object> secrets = secretResponse.Data.Data;
 
             // Vault KV v2 stores the actual secret data under a "data" key.
-            if (secrets.ContainsKey("data") &&
+            /*if (secrets.ContainsKey("data") &&
                 secrets["data"] is JsonElement element &&
                 element.ValueKind == JsonValueKind.Object)
             {
@@ -51,7 +50,7 @@ public class VaultClientService : IVaultClientService
                 foreach (var property in element.EnumerateObject())
                     parsedSecrets[property.Name] = property.Value.ToString();
                 return parsedSecrets;
-            }
+            }*/
 
             // Convert the object values to strings.
             return secrets.ToDictionary(k => k.Key, k => k.Value?.ToString());
