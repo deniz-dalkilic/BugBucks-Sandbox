@@ -7,38 +7,37 @@ using Serilog;
 
 namespace BugBucks.Shared.Logging;
 
-/// <summary>
-///     Configures the global logger using configuration settings.
-/// </summary>
 public static class LoggerConfigurator
 {
     public static void ConfigureLogger(IConfiguration configuration)
     {
-        // Bind Elasticsearch options from configuration
+        // Read Elasticsearch options if available
         var elasticOptions = configuration.GetSection("ElasticsearchOptions").Get<ElasticsearchOptions>();
-        // Retrieve Seq server URL and enabled flag from configuration
-        var seqSection = configuration.GetSection("Seq");
-        var seqServerUrl = seqSection["ServerUrl"];
-        var seqEnabled = seqSection.GetValue("Enabled", true);
 
-        // Build logger configuration
+        // Read Seq configuration
+        var seqServerUrl = configuration.GetValue<string>("Seq:ServerUrl");
+        var seqEnabled = configuration.GetValue("Seq:Enabled", true);
+
+        // Build base logger configuration
         var loggerConfig = new LoggerConfiguration()
             .ReadFrom.Configuration(configuration)
             .Enrich.FromLogContext()
             .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}");
 
-        // Conditionally add Elasticsearch sink if enabled
-        if (elasticOptions.Enabled)
+        // Add Elasticsearch sink if enabled and NodeUris are provided
+        if (elasticOptions != null && elasticOptions.Enabled &&
+            elasticOptions.NodeUris != null && elasticOptions.NodeUris.Any())
+        {
+            var nodeUris = elasticOptions.NodeUris.Select(uri => new Uri(uri)).ToArray();
             loggerConfig = loggerConfig.WriteTo.Elasticsearch(
-                elasticOptions.NodeUris.Select(uri => new Uri(uri)).ToArray(),
+                nodeUris,
                 opts =>
                 {
                     opts.DataStream = new DataStreamName(
                         elasticOptions.DataStream.Type,
                         elasticOptions.DataStream.Dataset,
                         elasticOptions.DataStream.Namespace);
-                    opts.BootstrapMethod =
-                        (BootstrapMethod)Enum.Parse(typeof(BootstrapMethod), elasticOptions.BootstrapMethod);
+                    opts.BootstrapMethod = Enum.Parse<BootstrapMethod>(elasticOptions.BootstrapMethod, true);
                     opts.ConfigureChannel = channelOpts =>
                     {
                         channelOpts.BufferOptions = new BufferOptions
@@ -49,37 +48,30 @@ public static class LoggerConfigurator
                 },
                 transport =>
                 {
-                    // Uncomment and configure if authentication is needed.
-                    // transport.Authentication(new BasicAuthentication(username, password));
+                    // Configure transport authentication if needed.
+                    // Example: transport.Authentication(new BasicAuthentication(username, password));
                 });
+        }
 
-        // Conditionally add Seq sink if enabled
-        if (seqEnabled) loggerConfig = loggerConfig.WriteTo.Seq(seqServerUrl);
+        // Add Seq sink if enabled
+        if (seqEnabled && !string.IsNullOrEmpty(seqServerUrl)) loggerConfig = loggerConfig.WriteTo.Seq(seqServerUrl);
 
         Log.Logger = loggerConfig.CreateLogger();
     }
 
-    /// <summary>
-    ///     Flushes and closes the global logger.
-    /// </summary>
     public static void CloseLogger()
     {
         Log.CloseAndFlush();
     }
 }
 
-// Elasticsearch configuration options
+// Strongly typed options for Elasticsearch configuration
 public class ElasticsearchOptions
 {
-    /// <summary>
-    ///     Enables or disables the Elasticsearch sink.
-    /// </summary>
     public bool Enabled { get; set; } = true;
-
     public string[] NodeUris { get; set; }
     public DataStreamOptions DataStream { get; set; }
     public string BootstrapMethod { get; set; }
-
     public BufferOptionsConfig BufferOptions { get; set; }
 }
 
