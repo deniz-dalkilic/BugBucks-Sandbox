@@ -5,7 +5,7 @@ using PaymentService.Domain.Enums;
 
 namespace PaymentService.Api.Controllers;
 
-[Route("api/[controller]")]
+[Route("api")]
 [ApiController]
 [Authorize]
 public class PaymentController : ControllerBase
