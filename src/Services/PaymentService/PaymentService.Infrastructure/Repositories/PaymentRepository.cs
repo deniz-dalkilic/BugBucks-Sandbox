@@ -14,40 +14,45 @@ public class PaymentRepository : IPaymentRepository
         _context = context;
     }
 
-    public async Task<Wallet> GetWalletByCustomerExternalIdAsync(Guid customerExternalId)
+    public async Task<Wallet> GetWalletByCustomerExternalIdAsync(Guid customerExternalId,
+        CancellationToken cancellationToken = default)
     {
-        return await _context.Wallets.FirstOrDefaultAsync(w => w.CustomerExternalId == customerExternalId);
+        return await _context.Wallets.FirstOrDefaultAsync(w => w.CustomerExternalId == customerExternalId,
+            cancellationToken);
     }
 
-    public async Task<Wallet> CreateWalletAsync(Wallet wallet)
+    public async Task<Wallet> CreateWalletAsync(Wallet wallet, CancellationToken cancellationToken = default)
     {
         _context.Wallets.Add(wallet);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
         return wallet;
     }
 
-    public async Task UpdateWalletAsync(Wallet wallet)
+    public async Task UpdateWalletAsync(Wallet wallet, CancellationToken cancellationToken = default)
     {
         _context.Wallets.Update(wallet);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<PaymentTransaction> CreatePaymentTransactionAsync(PaymentTransaction transaction)
+    public async Task<PaymentTransaction> CreatePaymentTransactionAsync(PaymentTransaction transaction,
+        CancellationToken cancellationToken = default)
     {
         _context.PaymentTransactions.Add(transaction);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
         return transaction;
     }
 
-    public async Task<PaymentTransaction?> GetPaymentTransactionByExternalIdAsync(Guid externalId)
+    public async Task<PaymentTransaction?> GetPaymentTransactionByExternalIdAsync(Guid externalId,
+        CancellationToken cancellationToken = default)
     {
-        return await _context.PaymentTransactions.FirstOrDefaultAsync(t => t.ExternalId == externalId);
+        return await _context.PaymentTransactions.FirstOrDefaultAsync(t => t.ExternalId == externalId,
+            cancellationToken);
     }
 
-    public async Task<Invoice> CreateInvoiceAsync(Invoice invoice)
+    public async Task<Invoice> CreateInvoiceAsync(Invoice invoice, CancellationToken cancellationToken = default)
     {
         _context.Invoices.Add(invoice);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
         return invoice;
     }
 }

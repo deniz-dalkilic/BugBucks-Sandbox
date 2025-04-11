@@ -1,4 +1,4 @@
-namespace BugBucks.Shared.VaultClient;
+namespace BugBucks.Shared.VaultClient.Services;
 
 /// <summary>
 ///     Abstraction for a Vault client service that retrieves secrets.

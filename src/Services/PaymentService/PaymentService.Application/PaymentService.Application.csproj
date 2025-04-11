@@ -10,4 +10,14 @@
         <ProjectReference Include="..\PaymentService.Domain\PaymentService.Domain.csproj"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <Reference Include="PaymentService.Infrastructure">
+            <HintPath>..\PaymentService.Api\bin\Debug\net9.0\PaymentService.Infrastructure.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
+    </ItemGroup>
+
 </Project>

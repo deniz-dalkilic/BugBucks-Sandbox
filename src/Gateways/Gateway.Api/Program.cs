@@ -1,7 +1,7 @@
 using System.Text;
 using BugBucks.Shared.Logging;
-using BugBucks.Shared.VaultClient;
 using BugBucks.Shared.VaultClient.Extensions;
+using BugBucks.Shared.VaultClient.Services;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Context;

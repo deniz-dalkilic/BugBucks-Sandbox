@@ -1,9 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
-using PaymentService.Infrastructure.Data;
 
-namespace OrderService.Infrastructure.Data;
+namespace PaymentService.Infrastructure.Data;
 
 /// <summary>
 ///     Design-time factory for OrderDbContext to support EF Core migrations.

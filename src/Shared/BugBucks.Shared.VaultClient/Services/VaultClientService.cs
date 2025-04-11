@@ -2,7 +2,7 @@ using Microsoft.Extensions.Configuration;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.Token;
 
-namespace BugBucks.Shared.VaultClient;
+namespace BugBucks.Shared.VaultClient.Services;
 
 /// <summary>
 ///     A Vault client service that retrieves secrets from HashiCorp Vault using VaultSharp.

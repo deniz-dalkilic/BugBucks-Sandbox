@@ -1,3 +1,4 @@
+using BugBucks.Shared.VaultClient.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BugBucks.Shared.VaultClient.Extensions;

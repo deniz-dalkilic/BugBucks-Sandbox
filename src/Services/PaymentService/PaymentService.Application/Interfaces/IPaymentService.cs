@@ -5,9 +5,12 @@ namespace PaymentService.Application.Interfaces;
 
 public interface IPaymentService
 {
-    Task<Wallet> GetWalletAsync(Guid customerExternalId);
-    Task<Wallet> TopUpWalletAsync(Guid customerExternalId, decimal amount);
+    Task<Wallet> GetWalletAsync(Guid customerExternalId, CancellationToken cancellationToken = default);
+
+    Task<Wallet> TopUpWalletAsync(Guid customerExternalId, decimal amount,
+        CancellationToken cancellationToken = default);
+
 
     Task<PaymentTransaction> ProcessPaymentAsync(Guid customerExternalId, decimal amount, PaymentMethodType method,
-        string? discountCode = null);
+        string? discountCode = null, CancellationToken cancellationToken = default);
 }

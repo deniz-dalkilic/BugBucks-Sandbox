@@ -1,3 +1,4 @@
+using System.Text.Json;
 using PaymentService.Application.Interfaces;
 using PaymentService.Domain.Enums;
 using PaymentService.Domain.Models;
@@ -13,67 +14,91 @@ public class PaymentServiceImplementation : IPaymentService
         _paymentRepository = paymentRepository;
     }
 
-    public async Task<Wallet> GetWalletAsync(Guid customerExternalId)
+    public async Task<Wallet> GetWalletAsync(Guid customerExternalId, CancellationToken cancellationToken = default)
     {
-        var wallet = await _paymentRepository.GetWalletByCustomerExternalIdAsync(customerExternalId);
+        var wallet = await _paymentRepository.GetWalletByCustomerExternalIdAsync(customerExternalId, cancellationToken);
         if (wallet == null)
         {
-            wallet = new Wallet { CustomerExternalId = customerExternalId, Balance = 0, BonusBalance = 0 };
-            wallet = await _paymentRepository.CreateWalletAsync(wallet);
+            wallet = new Wallet
+            {
+                CustomerExternalId = customerExternalId,
+                Balance = 0,
+                BonusBalance = 0,
+                CreatedDate = DateTime.UtcNow
+            };
+            wallet = await _paymentRepository.CreateWalletAsync(wallet, cancellationToken);
         }
 
         return wallet;
     }
 
-    public async Task<Wallet> TopUpWalletAsync(Guid customerExternalId, decimal amount)
+    public async Task<Wallet> TopUpWalletAsync(Guid customerExternalId, decimal amount,
+        CancellationToken cancellationToken = default)
     {
-        var wallet = await GetWalletAsync(customerExternalId);
+        var wallet = await GetWalletAsync(customerExternalId, cancellationToken);
         wallet.Balance += amount;
         wallet.UpdatedDate = DateTime.UtcNow;
-        await _paymentRepository.UpdateWalletAsync(wallet);
+        await _paymentRepository.UpdateWalletAsync(wallet, cancellationToken);
         return wallet;
     }
 
-    public async Task<PaymentTransaction> ProcessPaymentAsync(Guid customerExternalId, decimal amount,
-        PaymentMethodType method, string? discountCode = null)
+    public async Task<PaymentTransaction> ProcessPaymentAsync(
+        Guid customerExternalId,
+        decimal amount,
+        PaymentMethodType method,
+        string? discountCode = null,
+        CancellationToken cancellationToken = default)
     {
-        // Retrieve the customer's wallet
-        var wallet = await GetWalletAsync(customerExternalId);
+        var wallet = await GetWalletAsync(customerExternalId, cancellationToken);
 
-        // For wallet payments, ensure sufficient balance
         if (method == PaymentMethodType.Wallet)
         {
-            if (wallet.Balance < amount) throw new InvalidOperationException("Insufficient wallet balance.");
+            if (wallet.Balance < amount)
+                throw new InvalidOperationException("Insufficient wallet balance.");
             wallet.Balance -= amount;
             wallet.UpdatedDate = DateTime.UtcNow;
-            await _paymentRepository.UpdateWalletAsync(wallet);
+            await _paymentRepository.UpdateWalletAsync(wallet, cancellationToken);
         }
         else if (method == PaymentMethodType.ThirdParty)
         {
-            // Third-party payment processing integration goes here
+            // Integration with a third-party provider
         }
 
-        // Create a payment transaction record
         var transaction = new PaymentTransaction
         {
             WalletId = wallet.Id,
             Amount = amount,
             PaymentMethod = method,
-            Status = PaymentStatus.Completed
+            Status = PaymentStatus.Completed,
+            CreatedDate = DateTime.UtcNow,
+            ExternalId = Guid.NewGuid()
         };
-        transaction = await _paymentRepository.CreatePaymentTransactionAsync(transaction);
 
-        // Create an invoice (simplified, tax and discount calculations can be integrated)
+        transaction = await _paymentRepository.CreatePaymentTransactionAsync(transaction, cancellationToken);
+
         var invoice = new Invoice
         {
             PaymentTransactionId = transaction.Id,
             TotalAmount = amount,
             TaxAmount = 0,
-            DiscountAmount = 0
+            DiscountAmount = 0,
+            CreatedDate = DateTime.UtcNow
         };
-        invoice = await _paymentRepository.CreateInvoiceAsync(invoice);
 
+        invoice = await _paymentRepository.CreateInvoiceAsync(invoice, cancellationToken);
         transaction.Invoice = invoice;
+
+        var paymentEvent = new PaymentCompletedEvent
+        {
+            TransactionExternalId = transaction.ExternalId,
+            CustomerExternalId = customerExternalId,
+            Amount = amount,
+            Timestamp = DateTime.UtcNow
+        };
+
+        var eventJson = JsonSerializer.Serialize(paymentEvent);
+
+
         return transaction;
     }
 }

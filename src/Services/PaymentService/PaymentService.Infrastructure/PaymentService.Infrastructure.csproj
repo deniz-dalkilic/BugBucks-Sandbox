@@ -9,14 +9,16 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.3"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.3">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.3"/>
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1"/>
         <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0-preview.3.efcore.9.0.0"/>
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\Shared\BugBucks.Shared.VaultClient\BugBucks.Shared.VaultClient.csproj"/>
         <ProjectReference Include="..\PaymentService.Application\PaymentService.Application.csproj"/>
         <ProjectReference Include="..\PaymentService.Domain\PaymentService.Domain.csproj"/>
     </ItemGroup>
@@ -24,6 +26,9 @@
     <ItemGroup>
         <Reference Include="Microsoft.Extensions.Configuration">
             <HintPath>..\..\..\..\..\..\..\..\usr\local\share\dotnet\shared\Microsoft.AspNetCore.App\9.0.3\Microsoft.Extensions.Configuration.dll</HintPath>
+        </Reference>
+        <Reference Include="Microsoft.Extensions.Hosting.Abstractions">
+            <HintPath>..\..\..\..\..\..\..\..\usr\local\share\dotnet\shared\Microsoft.AspNetCore.App\9.0.3\Microsoft.Extensions.Hosting.Abstractions.dll</HintPath>
         </Reference>
     </ItemGroup>
 

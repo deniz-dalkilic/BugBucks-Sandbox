@@ -4,12 +4,17 @@ namespace PaymentService.Application.Interfaces;
 
 public interface IPaymentRepository
 {
-    Task<Wallet> GetWalletByCustomerExternalIdAsync(Guid customerExternalId);
-    Task<Wallet> CreateWalletAsync(Wallet wallet);
-    Task UpdateWalletAsync(Wallet wallet);
+    Task<Wallet> GetWalletByCustomerExternalIdAsync(Guid customerExternalId,
+        CancellationToken cancellationToken = default);
 
-    Task<PaymentTransaction> CreatePaymentTransactionAsync(PaymentTransaction transaction);
-    Task<PaymentTransaction?> GetPaymentTransactionByExternalIdAsync(Guid externalId);
+    Task<Wallet> CreateWalletAsync(Wallet wallet, CancellationToken cancellationToken = default);
+    Task UpdateWalletAsync(Wallet wallet, CancellationToken cancellationToken = default);
 
-    Task<Invoice> CreateInvoiceAsync(Invoice invoice);
+    Task<PaymentTransaction> CreatePaymentTransactionAsync(PaymentTransaction transaction,
+        CancellationToken cancellationToken = default);
+
+    Task<PaymentTransaction?> GetPaymentTransactionByExternalIdAsync(Guid externalId,
+        CancellationToken cancellationToken = default);
+
+    Task<Invoice> CreateInvoiceAsync(Invoice invoice, CancellationToken cancellationToken = default);
 }

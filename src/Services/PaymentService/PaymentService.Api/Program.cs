@@ -12,7 +12,6 @@ using Serilog.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load Vault secrets
 builder.Services.AddVaultClient();
 
 // Configure global logger
@@ -53,8 +52,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Dependency injection for PaymentService
+
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<IPaymentService, PaymentServiceImplementation>();
+
 
 var app = builder.Build();
 
