@@ -1,0 +1,8 @@
+CREATE
+DATABASE IF NOT EXISTS CheckoutDb;
+CREATE
+USER IF NOT EXISTS 'CheckoutDb_user'@'%' IDENTIFIED BY 'CheckoutDb_password';
+GRANT ALL PRIVILEGES ON CheckoutDb.* TO
+'CheckoutDb_user'@'%';
+FLUSH
+PRIVILEGES;
