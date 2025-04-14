@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.4"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.4"/>
+        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0-preview.3.efcore.9.0.0"/>
+        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="8.1.1"/>
+        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="8.1.1"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="..\..\..\..\.dockerignore">
+            <Link>.dockerignore</Link>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\CheckoutService.Application\CheckoutService.Application.csproj"/>
+        <ProjectReference Include="..\CheckoutService.Domain\CheckoutService.Domain.csproj"/>
+        <ProjectReference Include="..\CheckoutService.Infrastructure\CheckoutService.Infrastructure.csproj"/>
+    </ItemGroup>
+
+</Project>
