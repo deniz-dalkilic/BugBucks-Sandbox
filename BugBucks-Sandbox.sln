@@ -46,6 +46,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheckoutService.Application
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheckoutService.Infrastructure", "src\Services\CheckoutService\CheckoutService.Infrastructure\CheckoutService.Infrastructure.csproj", "{A54E7FC0-992C-47FF-95DE-48F1EB0E134A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheckoutService.Tests", "tests\CheckoutService.Tests\CheckoutService.Tests.csproj", "{3F0DAAC5-4278-4544-8C2A-FA6FE1EF0AA6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -144,5 +146,9 @@ Global
 		{A54E7FC0-992C-47FF-95DE-48F1EB0E134A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A54E7FC0-992C-47FF-95DE-48F1EB0E134A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A54E7FC0-992C-47FF-95DE-48F1EB0E134A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3F0DAAC5-4278-4544-8C2A-FA6FE1EF0AA6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F0DAAC5-4278-4544-8C2A-FA6FE1EF0AA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3F0DAAC5-4278-4544-8C2A-FA6FE1EF0AA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3F0DAAC5-4278-4544-8C2A-FA6FE1EF0AA6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
