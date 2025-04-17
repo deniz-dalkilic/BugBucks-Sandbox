@@ -52,6 +52,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BugBucks.SharedKernel", "sr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BugBucks.Logging", "src\Shared\BugBucks.Logging\BugBucks.Logging.csproj", "{2A4A3CE1-B07C-484A-93E1-4CBAC54A370E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BugBucks.BuildingBlocks", "BugBucks.BuildingBlocks\BugBucks.BuildingBlocks.csproj", "{85E4F800-1C75-4BC6-A19F-7DEEC8B810E9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -162,5 +164,9 @@ Global
 		{2A4A3CE1-B07C-484A-93E1-4CBAC54A370E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2A4A3CE1-B07C-484A-93E1-4CBAC54A370E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2A4A3CE1-B07C-484A-93E1-4CBAC54A370E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{85E4F800-1C75-4BC6-A19F-7DEEC8B810E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{85E4F800-1C75-4BC6-A19F-7DEEC8B810E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{85E4F800-1C75-4BC6-A19F-7DEEC8B810E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{85E4F800-1C75-4BC6-A19F-7DEEC8B810E9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
