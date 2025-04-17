@@ -1,10 +1,14 @@
+using BugBucks.Shared.Logging;
 using CheckoutService.Application.Interfaces;
 using CheckoutService.Application.Services;
 using CheckoutService.Infrastructure.Data;
 using CheckoutService.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+LoggerConfigurator.ConfigureLogger(builder.Configuration);
+builder.Host.UseSerilog();
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -34,3 +38,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program
+{
+}
