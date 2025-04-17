@@ -1,4 +1,4 @@
-namespace BugBucks.SharedKernel.Exceptions;
+namespace BugBucks.Shared.Kernel.Exceptions;
 
 public class DomainException : Exception
 {

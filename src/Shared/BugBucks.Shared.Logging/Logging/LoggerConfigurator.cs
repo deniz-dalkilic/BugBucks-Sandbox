@@ -1,4 +1,4 @@
-using BugBucks.Logging.Config;
+using BugBucks.Shared.Logging.Config;
 using Elastic.Channels;
 using Elastic.Ingest.Elasticsearch;
 using Elastic.Ingest.Elasticsearch.DataStreams;
@@ -7,7 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Serilog;
 using Serilog.Core;
 
-namespace BugBucks.Logging;
+namespace BugBucks.Shared.Logging;
 
 public static class LoggerConfigurator
 {

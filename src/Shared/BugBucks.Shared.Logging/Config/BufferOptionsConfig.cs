@@ -1,4 +1,4 @@
-namespace BugBucks.Logging.Config;
+namespace BugBucks.Shared.Logging.Config;
 
 public class BufferOptionsConfig
 {

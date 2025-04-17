@@ -36,7 +36,7 @@ public class AppLogger<T> : IAppLogger<T>
         _logger.LogError(exception, message, args);
     }
 
-    public void LogFatal(Exception exception, string message, params object[] args)
+    public void LogCritical(Exception exception, string message, params object[] args)
     {
         _logger.LogCritical(exception, message, args);
     }

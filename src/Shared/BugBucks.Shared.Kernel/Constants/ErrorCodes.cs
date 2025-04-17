@@ -1,4 +1,4 @@
-namespace BugBucks.SharedKernel.Constants;
+namespace BugBucks.Shared.Kernel.Constants;
 
 public static class ErrorCodes
 {

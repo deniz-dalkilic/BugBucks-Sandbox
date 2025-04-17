@@ -1,4 +1,4 @@
-namespace BugBucks.SharedKernel.Responses;
+namespace BugBucks.Shared.Kernel.Responses;
 
 public class BaseResponse
 {
