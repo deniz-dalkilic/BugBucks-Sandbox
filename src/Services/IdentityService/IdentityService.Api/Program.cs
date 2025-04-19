@@ -1,5 +1,5 @@
 using System.Text;
-using BugBucks.Shared.Logging;
+using BugBucks.Shared.Logging.Extensions;
 using BugBucks.Shared.VaultClient.Extensions;
 using IdentityService.Api.Authorization;
 using IdentityService.Application.Interfaces;
@@ -11,16 +11,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Serilog;
 using Serilog.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddVaultClient();
 
-// Configure global logger
-LoggerConfigurator.ConfigureLogger(builder.Configuration);
-builder.Host.UseSerilog();
+builder.AddAppLogging();
 
 // Configure DbContext with MySQL (Pomelo)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -113,5 +110,3 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-
-AppDomain.CurrentDomain.ProcessExit += (s, e) => LoggerConfigurator.CloseLogger();

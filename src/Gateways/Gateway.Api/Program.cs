@@ -1,5 +1,5 @@
 using System.Text;
-using BugBucks.Shared.Logging;
+using BugBucks.Shared.Logging.Extensions;
 using BugBucks.Shared.VaultClient.Extensions;
 using BugBucks.Shared.VaultClient.Services;
 using Microsoft.IdentityModel.Tokens;
@@ -8,13 +8,12 @@ using Serilog.Context;
 
 // Configure builder and logging as early as possible
 var builder = WebApplication.CreateBuilder(args);
-LoggerConfigurator.ConfigureLogger(builder.Configuration);
-builder.Host.UseSerilog();
+builder.AddAppLogging();
 
 // Register services
 builder.Services.AddVaultClient();
 builder.Services.AddSingleton<IVaultClientService, VaultClientService>();
-builder.Services.AddSingleton(typeof(IAppLogger<>), typeof(AppLogger<>));
+
 
 // Configure Authentication
 builder.Services.AddAuthentication(options =>
@@ -83,7 +82,7 @@ app.MapReverseProxy();
 using (var scope = app.Services.CreateScope())
 {
     var vaultService = scope.ServiceProvider.GetRequiredService<IVaultClientService>();
-    var appLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<Program>>();
+
     try
     {
         var mountPoint = builder.Configuration["Vault:MountPoint"];
@@ -94,15 +93,13 @@ using (var scope = app.Services.CreateScope())
         builder.Configuration["Jwt:Key"] =
             secrets.ContainsKey("JwtKey") ? secrets["JwtKey"] : builder.Configuration["Jwt:Key"];
 
-        appLogger.LogInformation("Vault secrets retrieved successfully.");
+
+        Log.Information("Vault secrets retrieved successfully.");
     }
     catch (Exception ex)
     {
-        appLogger.LogError(ex, "Error retrieving Vault secrets for API Gateway.");
+        Log.Error(ex, "Error retrieving Vault secrets for API Gateway.");
     }
 }
 
 app.Run();
-
-// Log shutdown on process exit
-AppDomain.CurrentDomain.ProcessExit += (s, e) => LoggerConfigurator.CloseLogger();
