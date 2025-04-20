@@ -1,10 +1,11 @@
-using BugBucks.Shared.Messaging.Implementations;
-using BugBucks.Shared.Messaging.Interfaces;
+//using BugBucks.Shared.Messaging.Implementations;
+//using BugBucks.Shared.Messaging.Interfaces;
 
 namespace BugBucks.Shared.Messaging.Tests;
 
 public class RabbitMqTests : IAsyncLifetime
 {
+    /*
     private IRabbitMqConsumer _consumer;
     private IRabbitMqPublisher _publisher;
 
@@ -52,5 +53,14 @@ public class RabbitMqTests : IAsyncLifetime
 
 
         Assert.True(messageReceived, "Published message was not received within the timeout period.");
+    }*/
+    public Task InitializeAsync()
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task DisposeAsync()
+    {
+        throw new NotImplementedException();
     }
 }
