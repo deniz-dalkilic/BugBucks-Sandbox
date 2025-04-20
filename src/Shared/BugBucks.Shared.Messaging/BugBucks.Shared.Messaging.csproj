@@ -7,7 +7,26 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.4"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4"/>
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.4"/>
+        <PackageReference Include="Polly" Version="8.5.2"/>
         <PackageReference Include="RabbitMQ.Client" Version="7.1.2"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Remove="Implementations\**"/>
+        <Compile Remove="Interfaces\**"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Remove="Implementations\**"/>
+        <EmbeddedResource Remove="Interfaces\**"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Remove="Implementations\**"/>
+        <None Remove="Interfaces\**"/>
     </ItemGroup>
 
 </Project>

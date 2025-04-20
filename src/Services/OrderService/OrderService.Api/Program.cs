@@ -1,7 +1,5 @@
 using System.Text;
 using BugBucks.Shared.Logging.Extensions;
-using BugBucks.Shared.Messaging.Implementations;
-using BugBucks.Shared.Messaging.Interfaces;
 using BugBucks.Shared.VaultClient.Extensions;
 using IdentityService.Api.Authorization;
 using Microsoft.AspNetCore.Authorization;
@@ -12,6 +10,8 @@ using OrderService.Application.Services;
 using OrderService.Infrastructure.Data;
 using OrderService.Infrastructure.Repositories;
 using Serilog.Context;
+//using BugBucks.Shared.Messaging.Implementations;
+//using BugBucks.Shared.Messaging.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -74,12 +74,13 @@ var port = int.Parse(rabbitMqSection["Port"] ?? "5672");
 var userName = rabbitMqSection["UserName"] ?? "guest";
 var password = rabbitMqSection["Password"] ?? "guest";
 
+/*
 builder.Services.AddSingleton<IRabbitMqPublisher>(sp =>
     RabbitMqPublisher.CreateAsync(hostName, port, userName, password).GetAwaiter().GetResult());
 
 builder.Services.AddSingleton<IRabbitMqConsumer>(sp =>
     RabbitMqConsumer.CreateAsync(hostName, port, userName, password).GetAwaiter().GetResult());
-
+*/
 
 var app = builder.Build();
 
