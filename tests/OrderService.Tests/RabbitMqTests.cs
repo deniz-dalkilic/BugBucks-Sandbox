@@ -1,7 +1,7 @@
 //using BugBucks.Shared.Messaging.Implementations;
 //using BugBucks.Shared.Messaging.Interfaces;
 
-namespace BugBucks.Shared.Messaging.Tests;
+namespace OrderService.Tests;
 
 public class RabbitMqTests : IAsyncLifetime
 {

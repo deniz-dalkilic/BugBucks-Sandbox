@@ -1,3 +1,5 @@
+using BugBucks.Shared.Logging.Interfaces;
+using BugBucks.Shared.Logging.Logging;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;

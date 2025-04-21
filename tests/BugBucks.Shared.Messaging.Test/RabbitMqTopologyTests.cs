@@ -3,7 +3,7 @@ using BugBucks.Shared.Messaging.Constants;
 using BugBucks.Shared.Messaging.Topology;
 using RabbitMQ.Client;
 
-namespace BugBucks.Shared.Messaging.Tests;
+namespace BugBucks.Shared.Messaging.Test;
 
 public class RabbitMqTopologyTests
 {

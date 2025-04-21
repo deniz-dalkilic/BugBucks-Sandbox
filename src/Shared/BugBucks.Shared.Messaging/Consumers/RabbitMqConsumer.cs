@@ -1,10 +1,11 @@
 using System.Text;
+using BugBucks.Shared.Messaging.Connection;
 using BugBucks.Shared.Messaging.Constants;
 using BugBucks.Shared.Messaging.Interfaces;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
-namespace BugBucks.Shared.Messaging.Implementations;
+namespace BugBucks.Shared.Messaging.Consumers;
 
 public class RabbitMqConsumer : IRabbitMqConsumer, IAsyncDisposable
 {
@@ -61,8 +62,8 @@ public class RabbitMqConsumer : IRabbitMqConsumer, IAsyncDisposable
         string userName,
         string password,
         string virtualHost = "/",
-        string clientProvidedName = null,
-        IEnumerable<AmqpTcpEndpoint> endpoints = null)
+        string? clientProvidedName = null,
+        IEnumerable<AmqpTcpEndpoint>? endpoints = null)
     {
         var connectionFactory = await RabbitMqConnectionFactory.CreateAsync(hostName, port, userName, password,
             virtualHost, clientProvidedName, endpoints);

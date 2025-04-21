@@ -1,4 +1,8 @@
 using BugBucks.Shared.Logging.Extensions;
+using BugBucks.Shared.Messaging.Consumers;
+using BugBucks.Shared.Messaging.Extensions;
+using BugBucks.Shared.Messaging.Interfaces;
+using BugBucks.Shared.Messaging.Publishers;
 using CheckoutService.Application.Interfaces;
 using CheckoutService.Application.Services;
 using CheckoutService.Infrastructure.Data;
@@ -16,6 +20,10 @@ builder.Services.AddSwaggerGen();
 // Register application services
 builder.Services.AddScoped<ICheckoutService, CheckoutServiceImplementation>();
 builder.Services.AddScoped<ICheckoutRepository, CheckoutRepository>();
+
+builder.Services.AddRabbitMq(builder.Configuration);
+builder.Services.AddSingleton<IRabbitMqPublisher, RabbitMqPublisher>();
+builder.Services.AddSingleton<IRabbitMqConsumer, RabbitMqConsumer>();
 
 // Configure EF Core with MySQL/MariaDB (adjust connection string and server version as needed)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -37,6 +45,9 @@ app.MapControllers();
 
 app.Run();
 
-public partial class Program
+namespace CheckoutService.Api
 {
+    public class Program
+    {
+    }
 }

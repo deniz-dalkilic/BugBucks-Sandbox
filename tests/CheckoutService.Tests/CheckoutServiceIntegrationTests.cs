@@ -1,6 +1,9 @@
 using System.Net.Http.Json;
+using CheckoutService.Api;
 using CheckoutService.Application.Models;
 using Microsoft.AspNetCore.Mvc.Testing;
+
+namespace CheckoutService.Tests;
 
 public class CheckoutServiceIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
 {

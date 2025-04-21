@@ -2,8 +2,8 @@ namespace BugBucks.Shared.Messaging.Constants;
 
 public static class RabbitMQConstants
 {
-    //public const string DefaultExchange = "default.exchange.key";
-    //public const string DefaultRoutingKey = "default.routing.key";
+    public const string DefaultExchange = "default.exchange.key";
+    public const string DefaultRoutingKey = "default.routing.key";
     public const bool Durable = true;
     public const bool Exclusive = false;
     public const bool AutoDelete = false;

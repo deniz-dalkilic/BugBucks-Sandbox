@@ -1,4 +1,4 @@
-namespace BugBucks.Shared.Logging;
+namespace BugBucks.Shared.Logging.Interfaces;
 
 public interface IAppLogger<T>
 {

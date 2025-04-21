@@ -1,9 +1,8 @@
-using CheckoutService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 
-namespace IdentityService.Infrastructure.Data;
+namespace CheckoutService.Infrastructure.Data;
 
 /// <summary>
 ///     Design-time factory for CheckoutDbContext to support EF Core migrations.

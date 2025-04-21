@@ -14,19 +14,5 @@
         <PackageReference Include="RabbitMQ.Client" Version="7.1.2"/>
     </ItemGroup>
 
-    <ItemGroup>
-        <Compile Remove="Implementations\**"/>
-        <Compile Remove="Interfaces\**"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <EmbeddedResource Remove="Implementations\**"/>
-        <EmbeddedResource Remove="Interfaces\**"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Remove="Implementations\**"/>
-        <None Remove="Interfaces\**"/>
-    </ItemGroup>
-
+   
 </Project>

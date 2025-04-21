@@ -7,7 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Serilog;
 using Serilog.Core;
 
-namespace BugBucks.Shared.Logging;
+namespace BugBucks.Shared.Logging.Logging;
 
 public static class LoggerConfigurator
 {

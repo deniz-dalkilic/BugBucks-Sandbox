@@ -1,6 +1,7 @@
+using BugBucks.Shared.Logging.Interfaces;
 using Microsoft.Extensions.Logging;
 
-namespace BugBucks.Shared.Logging;
+namespace BugBucks.Shared.Logging.Logging;
 
 public class AppLogger<T> : IAppLogger<T>
 {
