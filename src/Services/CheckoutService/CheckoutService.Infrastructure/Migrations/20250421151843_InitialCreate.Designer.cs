@@ -11,9 +11,9 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace CheckoutService.Infrastructure.Migrations
 {
-    [DbContext(typeof(CheckoutDbContext))]
-    [Migration("20250414141924_InitialCheckoutMigration")]
-    partial class InitialCheckoutMigration
+    [DbContext(typeof(CheckoutSagaDbContext))]
+    [Migration("20250421151843_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,28 +25,27 @@ namespace CheckoutService.Infrastructure.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
-            modelBuilder.Entity("CheckoutService.Domain.Models.Checkout", b =>
+            modelBuilder.Entity("CheckoutService.Domain.Entities.CheckoutSaga", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<Guid>("OrderId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<DateTime>("CheckoutDate")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
+                    b.Property<string>("LastError")
                         .HasColumnType("longtext");
 
-                    b.Property<decimal>("TotalAmount")
-                        .HasColumnType("decimal(65,30)");
+                    b.Property<DateTime>("LastUpdatedAt")
+                        .HasColumnType("datetime(6)");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("char(36)");
+                    b.Property<int>("State")
+                        .HasColumnType("int");
 
-                    b.HasKey("Id");
+                    b.HasKey("OrderId");
 
-                    b.ToTable("Checkouts");
+                    b.ToTable("CheckoutSagas", (string)null);
                 });
 #pragma warning restore 612, 618
         }

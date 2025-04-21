@@ -42,8 +42,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheckoutService.Domain", "s
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheckoutService.Application", "src\Services\CheckoutService\CheckoutService.Application\CheckoutService.Application.csproj", "{717CCC71-0064-46D9-8FC8-141DAC700D2C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheckoutService.Infrastructure", "src\Services\CheckoutService\CheckoutService.Infrastructure\CheckoutService.Infrastructure.csproj", "{A54E7FC0-992C-47FF-95DE-48F1EB0E134A}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheckoutService.Tests", "tests\CheckoutService.Tests\CheckoutService.Tests.csproj", "{3F0DAAC5-4278-4544-8C2A-FA6FE1EF0AA6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BugBucks.Shared.Kernel", "src\Shared\BugBucks.Shared.Kernel\BugBucks.Shared.Kernel.csproj", "{06FF3C08-5B20-4F4F-B0DE-4CFAE45497B7}"
@@ -51,6 +49,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BugBucks.Shared.Logging", "src\Shared\BugBucks.Shared.Logging\BugBucks.Shared.Logging.csproj", "{2A4A3CE1-B07C-484A-93E1-4CBAC54A370E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BugBucks.Shared.Messaging.Test", "tests\BugBucks.Shared.Messaging.Test\BugBucks.Shared.Messaging.Test.csproj", "{547ADC95-1E62-4D8D-B37A-7C78052B6CDE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheckoutService.Infrastructure", "src\Services\CheckoutService\CheckoutService.Infrastructure\CheckoutService.Infrastructure.csproj", "{FC85484B-12DA-4878-885D-BCE47F2D3FB0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -142,10 +142,6 @@ Global
 		{717CCC71-0064-46D9-8FC8-141DAC700D2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{717CCC71-0064-46D9-8FC8-141DAC700D2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{717CCC71-0064-46D9-8FC8-141DAC700D2C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A54E7FC0-992C-47FF-95DE-48F1EB0E134A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A54E7FC0-992C-47FF-95DE-48F1EB0E134A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A54E7FC0-992C-47FF-95DE-48F1EB0E134A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A54E7FC0-992C-47FF-95DE-48F1EB0E134A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{3F0DAAC5-4278-4544-8C2A-FA6FE1EF0AA6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{3F0DAAC5-4278-4544-8C2A-FA6FE1EF0AA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3F0DAAC5-4278-4544-8C2A-FA6FE1EF0AA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -162,5 +158,9 @@ Global
 		{547ADC95-1E62-4D8D-B37A-7C78052B6CDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{547ADC95-1E62-4D8D-B37A-7C78052B6CDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{547ADC95-1E62-4D8D-B37A-7C78052B6CDE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC85484B-12DA-4878-885D-BCE47F2D3FB0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC85484B-12DA-4878-885D-BCE47F2D3FB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC85484B-12DA-4878-885D-BCE47F2D3FB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC85484B-12DA-4878-885D-BCE47F2D3FB0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

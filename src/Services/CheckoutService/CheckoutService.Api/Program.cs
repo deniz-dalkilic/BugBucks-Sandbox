@@ -6,8 +6,10 @@ using BugBucks.Shared.Messaging.Publishers;
 using CheckoutService.Application.Interfaces;
 using CheckoutService.Application.Services;
 using CheckoutService.Infrastructure.Data;
-using CheckoutService.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+
+//using CheckoutService.Infrastructure.Data;
+//using CheckoutService.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddAppLogging();
@@ -19,7 +21,7 @@ builder.Services.AddSwaggerGen();
 
 // Register application services
 builder.Services.AddScoped<ICheckoutService, CheckoutServiceImplementation>();
-builder.Services.AddScoped<ICheckoutRepository, CheckoutRepository>();
+//builder.Services.AddScoped<ICheckoutRepository, CheckoutRepository>();
 
 builder.Services.AddRabbitMq(builder.Configuration);
 builder.Services.AddSingleton<IRabbitMqPublisher, RabbitMqPublisher>();
@@ -27,8 +29,10 @@ builder.Services.AddSingleton<IRabbitMqConsumer, RabbitMqConsumer>();
 
 // Configure EF Core with MySQL/MariaDB (adjust connection string and server version as needed)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<CheckoutDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+
+
+builder.Services.AddDbContext<CheckoutSagaDbContext>(opts =>
+    opts.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
 var app = builder.Build();
 

@@ -1,15 +1,16 @@
+using CheckoutService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 
-namespace CheckoutService.Infrastructure.Data;
+namespace OrderService.Infrastructure.Data;
 
 /// <summary>
-///     Design-time factory for CheckoutDbContext to support EF Core migrations.
+///     Design-time factory for CheckoutSagaDbContext to support EF Core migrations.
 /// </summary>
-public class CheckoutDbContextFactory : IDesignTimeDbContextFactory<CheckoutDbContext>
+public class CheckoutSagaDbContextFactory : IDesignTimeDbContextFactory<CheckoutSagaDbContext>
 {
-    public CheckoutDbContext CreateDbContext(string[] args)
+    public CheckoutSagaDbContext CreateDbContext(string[] args)
     {
         // Build configuration manually from appsettings.json (ensure the file is copied to output)
         var configuration = new ConfigurationBuilder()
@@ -18,13 +19,13 @@ public class CheckoutDbContextFactory : IDesignTimeDbContextFactory<CheckoutDbCo
             .AddJsonFile("appsettings.Development.json", true)
             .Build();
 
-        var optionsBuilder = new DbContextOptionsBuilder<CheckoutDbContext>();
+        var optionsBuilder = new DbContextOptionsBuilder<CheckoutSagaDbContext>();
 
-        // Get connection string from configuration ("DefaultConnection")
+
         var connectionString = configuration.GetConnectionString("DefaultConnection");
 
         optionsBuilder.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
 
-        return new CheckoutDbContext(optionsBuilder.Options);
+        return new CheckoutSagaDbContext(optionsBuilder.Options);
     }
 }
