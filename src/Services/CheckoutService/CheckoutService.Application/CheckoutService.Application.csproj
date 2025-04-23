@@ -7,7 +7,9 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\Shared\BugBucks.Shared.Messaging\BugBucks.Shared.Messaging.csproj"/>
         <ProjectReference Include="..\CheckoutService.Domain\CheckoutService.Domain.csproj"/>
+        <ProjectReference Include="..\CheckoutService.Infrastructure\CheckoutService.Infrastructure.csproj"/>
     </ItemGroup>
 
 </Project>

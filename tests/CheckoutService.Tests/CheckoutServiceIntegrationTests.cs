@@ -1,7 +1,7 @@
 using System.Net.Http.Json;
-using CheckoutService.Api;
 using CheckoutService.Application.Models;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.VisualStudio.TestPlatform.TestHost;
 
 namespace CheckoutService.Tests;
 

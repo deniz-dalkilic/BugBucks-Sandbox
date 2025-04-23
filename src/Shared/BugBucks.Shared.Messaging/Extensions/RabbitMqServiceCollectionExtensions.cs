@@ -29,10 +29,11 @@ public static class RabbitMqServiceCollectionExtensions
                     attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt))
                 );
 
-            IConnection connection = null!;
-            retryPolicy.Execute(async () => { connection = await factory.CreateConnectionAsync(); });
-
-            return connection;
+            return retryPolicy.Execute(() =>
+                factory
+                    .CreateConnectionAsync()
+                    .GetAwaiter()
+                    .GetResult());
         });
 
         // Declare topology at startup
