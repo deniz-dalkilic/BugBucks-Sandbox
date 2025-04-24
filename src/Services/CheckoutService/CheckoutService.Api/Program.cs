@@ -1,3 +1,4 @@
+using BugBucks.Shared.Logging.Extensions;
 using BugBucks.Shared.Messaging.Extensions;
 using BugBucks.Shared.Messaging.Services;
 using BugBucks.Shared.Messaging.Topology;
@@ -8,8 +9,12 @@ using CheckoutService.Infrastructure.Data;
 using CheckoutService.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using RabbitMQ.Client;
+using Serilog;
+using Serilog.Context;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddAppLogging();
 
 // RabbitMQ DI and config
 builder.Services.AddRabbitMq(builder.Configuration);
@@ -29,6 +34,22 @@ builder.Services.AddSingleton<CheckoutSagaPublisher>();
 builder.Services.AddHostedService<CheckoutSagaConsumer>();
 
 var app = builder.Build();
+
+// Log startup
+Log.Information("Application starting up...");
+
+if (app.Environment.IsDevelopment())
+    app.UseDeveloperExceptionPage();
+
+// Use correlation ID middleware for logging
+app.Use(async (context, next) =>
+{
+    var correlationId = context.Request.Headers["X-Correlation-ID"].FirstOrDefault() ?? Guid.NewGuid().ToString();
+    using (LogContext.PushProperty("CorrelationId", correlationId))
+    {
+        await next();
+    }
+});
 
 // Declare RabbitMQ topology on startup
 app.Lifetime.ApplicationStarted.Register(async () =>
