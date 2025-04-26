@@ -5,43 +5,48 @@ using Elastic.Ingest.Elasticsearch.DataStreams;
 using Elastic.Serilog.Sinks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
-using Serilog.Core;
-
-namespace BugBucks.Shared.Logging.Logging;
+using Serilog.Events;
 
 public static class LoggerConfigurator
 {
-    public static void ConfigureLogger(IConfiguration configuration)
+    public static void ConfigureLogger(IConfiguration config)
     {
-        var elasticOptions = configuration.GetSection("ElasticsearchOptions").Get<ElasticsearchOptions>();
-        var seqOptions = configuration.GetSection("Seq").Get<SeqOptions>();
+        var defaultLevel = config.GetValue("Logging:MinimumLevel", LogEventLevel.Verbose);
+        var elasticLevel = config.GetValue("ElasticsearchOptions:MinimumLevel", defaultLevel);
+        var seqLevel = config.GetValue("Seq:MinimumLevel", defaultLevel);
 
-        var loggerConfig = new LoggerConfiguration()
-            .MinimumLevel.ControlledBy(new LoggingLevelSwitch())
+        var logger = new LoggerConfiguration()
+            .MinimumLevel.Is(defaultLevel)
             .Enrich.FromLogContext()
-            .WriteTo.Console();
+            .WriteTo.Console(defaultLevel);
 
-        if (elasticOptions != null && elasticOptions.Enabled && elasticOptions.NodeUris.Any())
+        var esOpts = config.GetSection("ElasticsearchOptions").Get<ElasticsearchOptions>()!;
+        if (esOpts.Enabled && esOpts.NodeUris.Any())
         {
-            var uris = elasticOptions.NodeUris.Select(u => new Uri(u)).ToArray();
-            loggerConfig = loggerConfig.WriteTo.Elasticsearch(
+            var uris = esOpts.NodeUris.Select(u => new Uri(u)).ToArray();
+            logger = logger.WriteTo.Elasticsearch(
                 uris,
                 opts =>
                 {
                     opts.DataStream = new DataStreamName(
-                        elasticOptions.DataStream.Type,
-                        elasticOptions.DataStream.Dataset,
-                        elasticOptions.DataStream.Namespace);
-                    opts.BootstrapMethod = Enum.Parse<BootstrapMethod>(elasticOptions.BootstrapMethod, true);
-                    opts.ConfigureChannel = c => c.BufferOptions = new BufferOptions
-                        { ExportMaxConcurrency = elasticOptions.BufferOptions.ExportMaxConcurrency };
-                });
+                        esOpts.DataStream.Type,
+                        esOpts.DataStream.Dataset,
+                        esOpts.DataStream.Namespace);
+                    opts.BootstrapMethod = Enum.Parse<BootstrapMethod>(esOpts.BootstrapMethod, true);
+                    opts.ConfigureChannel = c =>
+                        c.BufferOptions = new BufferOptions
+                            { ExportMaxConcurrency = esOpts.BufferOptions.ExportMaxConcurrency };
+                },
+                restrictedToMinimumLevel: elasticLevel);
         }
 
-        if (seqOptions != null && seqOptions.Enabled && !string.IsNullOrEmpty(seqOptions.ServerUrl))
-            loggerConfig = loggerConfig.WriteTo.Seq(seqOptions.ServerUrl);
+        var seqOpts = config.GetSection("Seq").Get<SeqOptions>()!;
+        if (seqOpts.Enabled && !string.IsNullOrWhiteSpace(seqOpts.ServerUrl))
+            logger = logger.WriteTo.Seq(
+                seqOpts.ServerUrl,
+                seqLevel);
 
-        Log.Logger = loggerConfig.CreateLogger();
+        Log.Logger = logger.CreateLogger();
     }
 
     public static void CloseLogger()
