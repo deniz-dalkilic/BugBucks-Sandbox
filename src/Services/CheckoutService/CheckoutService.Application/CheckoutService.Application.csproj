@@ -7,9 +7,14 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\Shared\BugBucks.Shared.Logging\BugBucks.Shared.Logging.csproj" />
         <ProjectReference Include="..\..\..\Shared\BugBucks.Shared.Messaging\BugBucks.Shared.Messaging.csproj"/>
         <ProjectReference Include="..\CheckoutService.Domain\CheckoutService.Domain.csproj"/>
         <ProjectReference Include="..\CheckoutService.Infrastructure\CheckoutService.Infrastructure.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="RabbitMQ.Client" Version="7.1.2" />
     </ItemGroup>
 
 </Project>

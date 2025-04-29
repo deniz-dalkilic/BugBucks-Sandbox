@@ -1,4 +1,5 @@
 using System.Text.Json;
+using BugBucks.Shared.Logging.Interfaces;
 using BugBucks.Shared.Messaging.Constants;
 using BugBucks.Shared.Messaging.Events;
 using CheckoutService.Application.Services;
@@ -10,15 +11,18 @@ namespace CheckoutService.Api.HostedServices;
 public class CheckoutSagaConsumer : BackgroundService
 {
     private readonly IChannel _channel;
+    private readonly IAppLogger<CheckoutSagaConsumer> _logger;
     private readonly IServiceScopeFactory _scopeFactory;
 
     public CheckoutSagaConsumer(
         IConnection connection,
-        IServiceScopeFactory scopeFactory)
+        IServiceScopeFactory scopeFactory,
+        IAppLogger<CheckoutSagaConsumer> logger)
     {
         // Create channel synchronously at startup
         _channel = connection.CreateChannelAsync().GetAwaiter().GetResult();
         _scopeFactory = scopeFactory;
+        _logger = logger;
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -49,7 +53,14 @@ public class CheckoutSagaConsumer : BackgroundService
             {
                 case nameof(OrderCreatedEvent):
                     var created = JsonSerializer.Deserialize<OrderCreatedEvent>(body);
-                    await orchestrator.HandleAsync(created!);
+                    if (created != null)
+                    {
+                        _logger.LogDebug("Consumer received message of type {Type} for OrderId={OrderId}",
+                            eventType, created.OrderId);
+
+                        await orchestrator.HandleAsync(created!);
+                    }
+
                     break;
                 case nameof(PaymentSucceededEvent):
                     var paid = JsonSerializer.Deserialize<PaymentSucceededEvent>(body);

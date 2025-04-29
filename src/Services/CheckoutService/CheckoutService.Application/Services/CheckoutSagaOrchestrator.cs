@@ -1,92 +1,158 @@
-using System;
-using System.Threading.Tasks;
+using System.Text.Json;
+using BugBucks.Shared.Logging.Interfaces;
 using BugBucks.Shared.Messaging.Events;
-using BugBucks.Shared.Messaging.Services;
 using CheckoutService.Domain.Entities;
+using CheckoutService.Infrastructure.Data;
+using CheckoutService.Infrastructure.Entities;
 using CheckoutService.Infrastructure.Repositories;
 
-namespace CheckoutService.Application.Services
+namespace CheckoutService.Application.Services;
+
+/// <summary>
+///     Orchestrates checkout saga state transitions and enqueues events into the outbox.
+/// </summary>
+public class CheckoutSagaOrchestrator : ICheckoutSagaOrchestrator
 {
-    /// <summary>
-    /// Orchestrates checkout saga state transitions and event publication.
-    /// </summary>
-    public class CheckoutSagaOrchestrator : ICheckoutSagaOrchestrator
+    private readonly CheckoutSagaDbContext _db;
+    private readonly IAppLogger<CheckoutSagaOrchestrator> _logger;
+    private readonly ICheckoutSagaRepository _repo;
+
+    public CheckoutSagaOrchestrator(
+        ICheckoutSagaRepository repo,
+        CheckoutSagaDbContext db,
+        IAppLogger<CheckoutSagaOrchestrator> logger)
     {
-        private readonly ICheckoutSagaRepository _repository;
-        private readonly CheckoutSagaPublisher _publisher;
+        _repo = repo;
+        _db = db;
+        _logger = logger;
+    }
 
-        public CheckoutSagaOrchestrator(
-            ICheckoutSagaRepository repository,
-            CheckoutSagaPublisher publisher)
+    public async Task HandleAsync(OrderCreatedEvent evt)
+    {
+        var saga = await _repo.LoadAsync(evt.OrderId);
+
+        _logger.LogDebug("Orchestrator handling {Type} for OrderId={OrderId}, current state={State}",
+            nameof(OrderCreatedEvent), evt.OrderId, saga.State);
+
+        saga.Transition(SagaTrigger.OrderCreated);
+        await _repo.SaveAsync(saga);
+
+        // Enqueue PaymentRequestedEvent
+        var paymentRequested = new PaymentRequestedEvent(evt.OrderId, /* paymentDetails */
+            string.Empty, /* idempotencyKey */ Guid.NewGuid().ToString());
+        var outbox = new OutboxMessage
         {
-            _repository = repository;
-            _publisher = publisher;
-        }
+            Id = Guid.NewGuid(),
+            AggregateType = nameof(CheckoutSaga),
+            AggregateId = evt.OrderId,
+            Type = nameof(PaymentRequestedEvent),
+            Content = JsonSerializer.Serialize(paymentRequested),
+            OccurredAt = DateTime.UtcNow
+        };
+        _db.OutboxMessages.Add(outbox);
+        await _db.SaveChangesAsync();
 
-        public async Task HandleAsync(OrderCreatedEvent evt)
+        _logger.LogDebug("Saga {OrderId} transitioned to {NewState}", evt.OrderId, saga.State);
+    }
+
+    public async Task HandleAsync(PaymentSucceededEvent evt)
+    {
+        var saga = await _repo.LoadAsync(evt.OrderId);
+        saga.Transition(SagaTrigger.PaymentSucceeded);
+        await _repo.SaveAsync(saga);
+
+        // Enqueue InventoryReserveRequestedEvent
+        var invRequest = new InventoryReserveRequestedEvent(evt.OrderId, Array.Empty<InventoryItem>());
+        var outbox = new OutboxMessage
         {
-            // Just create saga and set state to PaymentProcessing
-            var saga = await _repository.LoadAsync(evt.OrderId);
-            saga.Transition(SagaTrigger.OrderCreated);
-            await _repository.SaveAsync(saga);
-            // Note: PaymentRequestedEvent is published by API endpoint
-        }
+            Id = Guid.NewGuid(),
+            AggregateType = nameof(CheckoutSaga),
+            AggregateId = evt.OrderId,
+            Type = nameof(InventoryReserveRequestedEvent),
+            Content = JsonSerializer.Serialize(invRequest),
+            OccurredAt = DateTime.UtcNow
+        };
+        _db.OutboxMessages.Add(outbox);
+        await _db.SaveChangesAsync();
+    }
 
-        public async Task HandleAsync(PaymentSucceededEvent evt)
+    public async Task HandleAsync(PaymentFailedEvent evt)
+    {
+        var saga = await _repo.LoadAsync(evt.OrderId);
+        saga.Transition(SagaTrigger.PaymentFailed);
+        saga.SetError(evt.ErrorCode);
+        await _repo.SaveAsync(saga);
+
+        // Enqueue OrderCompensatedEvent
+        var comp = new OrderCompensatedEvent(evt.OrderId, evt.ErrorCode);
+        var outbox = new OutboxMessage
         {
-            var saga = await _repository.LoadAsync(evt.OrderId);
-            saga.Transition(SagaTrigger.PaymentSucceeded);
-            await _repository.SaveAsync(saga);
+            Id = Guid.NewGuid(),
+            AggregateType = nameof(CheckoutSaga),
+            AggregateId = evt.OrderId,
+            Type = nameof(OrderCompensatedEvent),
+            Content = JsonSerializer.Serialize(comp),
+            OccurredAt = DateTime.UtcNow
+        };
+        _db.OutboxMessages.Add(outbox);
+        await _db.SaveChangesAsync();
+    }
 
-            // TODO: fetch order items for inventory reservation
-            await _publisher.PublishInventoryReserveRequestedAsync(evt.OrderId, Array.Empty<InventoryItem>());
-        }
+    public async Task HandleAsync(InventoryReservedEvent evt)
+    {
+        var saga = await _repo.LoadAsync(evt.OrderId);
+        saga.Transition(SagaTrigger.InventoryReserved);
+        await _repo.SaveAsync(saga);
 
-        public async Task HandleAsync(PaymentFailedEvent evt)
+        // Enqueue OrderCompletedEvent
+        var complete = new OrderCompletedEvent(evt.OrderId);
+        var outbox = new OutboxMessage
         {
-            var saga = await _repository.LoadAsync(evt.OrderId);
-            saga.Transition(SagaTrigger.PaymentFailed);
-            saga.SetError(evt.ErrorCode);
-            await _repository.SaveAsync(saga);
+            Id = Guid.NewGuid(),
+            AggregateType = nameof(CheckoutSaga),
+            AggregateId = evt.OrderId,
+            Type = nameof(OrderCompletedEvent),
+            Content = JsonSerializer.Serialize(complete),
+            OccurredAt = DateTime.UtcNow
+        };
+        _db.OutboxMessages.Add(outbox);
+        await _db.SaveChangesAsync();
+    }
 
-            // Compensate saga
-            await _publisher.PublishOrderCompensatedAsync(evt.OrderId, evt.ErrorCode);
-        }
+    public async Task HandleAsync(InventoryFailedEvent evt)
+    {
+        var saga = await _repo.LoadAsync(evt.OrderId);
+        saga.Transition(SagaTrigger.InventoryFailed);
+        saga.SetError(evt.Reason);
+        await _repo.SaveAsync(saga);
 
-        public async Task HandleAsync(InventoryReservedEvent evt)
+        // Enqueue OrderCompensatedEvent
+        var comp = new OrderCompensatedEvent(evt.OrderId, evt.Reason);
+        var outbox = new OutboxMessage
         {
-            var saga = await _repository.LoadAsync(evt.OrderId);
-            saga.Transition(SagaTrigger.InventoryReserved);
-            await _repository.SaveAsync(saga);
+            Id = Guid.NewGuid(),
+            AggregateType = nameof(CheckoutSaga),
+            AggregateId = evt.OrderId,
+            Type = nameof(OrderCompensatedEvent),
+            Content = JsonSerializer.Serialize(comp),
+            OccurredAt = DateTime.UtcNow
+        };
+        _db.OutboxMessages.Add(outbox);
+        await _db.SaveChangesAsync();
+    }
 
-            // Complete order
-            await _publisher.PublishOrderCompletedAsync(evt.OrderId);
-        }
+    public async Task HandleAsync(OrderCompletedEvent evt)
+    {
+        var saga = await _repo.LoadAsync(evt.OrderId);
+        saga.Transition(SagaTrigger.OrderCompleted);
+        await _repo.SaveAsync(saga);
+    }
 
-        public async Task HandleAsync(InventoryFailedEvent evt)
-        {
-            var saga = await _repository.LoadAsync(evt.OrderId);
-            saga.Transition(SagaTrigger.InventoryFailed);
-            saga.SetError(evt.Reason);
-            await _repository.SaveAsync(saga);
-
-            // Compensate saga
-            await _publisher.PublishOrderCompensatedAsync(evt.OrderId, evt.Reason);
-        }
-
-        public async Task HandleAsync(OrderCompletedEvent evt)
-        {
-            var saga = await _repository.LoadAsync(evt.OrderId);
-            saga.Transition(SagaTrigger.OrderCompleted);
-            await _repository.SaveAsync(saga);
-        }
-
-        public async Task HandleAsync(OrderCompensatedEvent evt)
-        {
-            var saga = await _repository.LoadAsync(evt.OrderId);
-            saga.Transition(SagaTrigger.OrderCompensated);
-            saga.SetError(evt.Reason);
-            await _repository.SaveAsync(saga);
-        }
+    public async Task HandleAsync(OrderCompensatedEvent evt)
+    {
+        var saga = await _repo.LoadAsync(evt.OrderId);
+        saga.Transition(SagaTrigger.OrderCompensated);
+        saga.SetError(evt.Reason);
+        await _repo.SaveAsync(saga);
     }
 }

@@ -18,8 +18,4 @@
         <Using Include="Xunit"/>
     </ItemGroup>
 
-    <ItemGroup>
-        <ProjectReference Include="..\..\src\Shared\BugBucks.Shared.Messaging\BugBucks.Shared.Messaging.csproj"/>
-    </ItemGroup>
-
 </Project>
