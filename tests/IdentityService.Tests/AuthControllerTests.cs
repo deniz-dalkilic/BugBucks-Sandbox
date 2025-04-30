@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
 using IdentityService.Api;
@@ -19,7 +20,6 @@ public class AuthControllerTests : IClassFixture<WebApplicationFactory<EntryPoin
     [Fact]
     public async Task Register_ShouldReturnOk_WhenUserIsRegistered()
     {
-        // Arrange
         var registerModel = new RegisterRequest
         {
             UserName = "testuser3",
@@ -29,20 +29,18 @@ public class AuthControllerTests : IClassFixture<WebApplicationFactory<EntryPoin
             DateOfBirth = new DateTime(1990, 1, 1)
         };
 
-        // Act
         var response = await _client.PostAsJsonAsync("/api/auth/register", registerModel);
 
-        // Assert
         response.IsSuccessStatusCode.Should().BeTrue();
         var content = await response.Content.ReadAsStringAsync();
-        content.Should().Contain("registered successfully");
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        content.Should().Contain($"\"userName\":\"{registerModel.UserName}\"");
+        content.Should().Contain($"\"email\":\"{registerModel.Email}\"");
     }
 
     [Fact]
     public async Task Login_ShouldReturnToken_WhenCredentialsAreValid()
     {
-        // Arrange
-        // Create a test user first.
         var registerModel = new RegisterRequest
         {
             UserName = "loginuser2",
@@ -59,12 +57,10 @@ public class AuthControllerTests : IClassFixture<WebApplicationFactory<EntryPoin
             Password = "Test@123"
         };
 
-        // Act
+
         var response = await _client.PostAsJsonAsync("/api/auth/login", loginModel);
 
-        // Assert
         response.IsSuccessStatusCode.Should().BeTrue();
-        // Response'u strongly-typed model ile deserialize ediyoruz.
         var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
         loginResponse.Should().NotBeNull();
         loginResponse.Token.Should().NotBeNullOrEmpty();
