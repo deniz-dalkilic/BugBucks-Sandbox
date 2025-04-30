@@ -1,0 +1,6 @@
+﻿services:
+  identityservice.api:
+    image: identityservice.api
+    build:
+      context: .
+      dockerfile: src/Services/IdentityService/IdentityService.Api/Dockerfile
