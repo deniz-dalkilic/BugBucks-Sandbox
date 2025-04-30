@@ -19,12 +19,15 @@ jobs:
       mysql:
         image: mariadb:11.7
         env:
-          MYSQL_ROOT_PASSWORD: password
-          MYSQL_DATABASE: IdentityService
+          MARIADB_ROOT_PASSWORD: password
+          MARIADB_USER: user
+          MARIADB_PASSWORD: password
+          MARIADB_DATABASE: IdentityService
+          
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -ppassword"
+          --health-cmd="mariadb-admin ping -p password"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
