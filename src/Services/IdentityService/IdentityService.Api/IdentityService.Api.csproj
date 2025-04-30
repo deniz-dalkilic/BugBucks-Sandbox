@@ -5,8 +5,6 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-        <PreserveCompilationContext>true</PreserveCompilationContext>
-        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     </PropertyGroup>
 
     <ItemGroup>
@@ -20,8 +18,8 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.4"/>
         <PackageReference Include="Serilog" Version="4.2.0"/>
         <PackageReference Include="Serilog.Extensions.Hosting" Version="9.0.0"/>
-        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="8.1.1"/>
-        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="8.1.1"/>
+        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="8.0.0"/>
+        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="8.0.0"/>
         <PackageReference Include="VaultSharp" Version="1.17.5.1"/>
     </ItemGroup>
 
