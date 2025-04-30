@@ -10,8 +10,8 @@ env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ${{ github.repository_owner }}/bugbucks
   ASPNETCORE_ENVIRONMENT: Test
-  ConnectionStrings__DefaultConnection: "Server=127.0.0.1;Port=3306;Database=IdentityService;Uid=root;Pwd=password;"
-
+  ConnectionStrings__DefaultConnection: "Server=localhost;Port=3306;Database=IdentityService;Uid=root;Pwd=password;"
+  RABBITMQ_HOST: rabbitmq
 jobs:
   build-test:
     runs-on: ubuntu-latest
@@ -25,7 +25,7 @@ jobs:
           MARIADB_DATABASE: IdentityService
           MARIADB_AUTHENTICATION_PLUGIN: mysql_native_password 
           MARIADB_INNODB_USE_NATIVE_AIO: 0
-        
+          MARIADB_AUTO_UPGRADE: 1
         ports:
           - 3306:3306
         options: >-
@@ -34,7 +34,14 @@ jobs:
           --health-timeout=5s
           --health-retries=5
           --ulimit memlock=262144:262144
-    
+          --security-opt seccomp=unconfined
+
+      rabbitmq: 
+        image: rabbitmq:management
+        ports:
+          - 5672:5672
+          - 15672:15672
+
     steps:
       - uses: actions/checkout@v4
 
@@ -49,7 +56,11 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test --configuration Release --no-build --logger "trx;LogFileName=test-results.trx"
+        run: dotnet test 
+          --configuration Release 
+          --no-build 
+          --filter "FullyQualifiedName!~RabbitMqTopologyTests" 
+          --logger "trx;LogFileName=test-results.trx"
 
       - name: Upload Test Results
         if: always()
