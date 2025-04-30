@@ -23,14 +23,17 @@ jobs:
           MARIADB_USER: user
           MARIADB_PASSWORD: password
           MARIADB_DATABASE: IdentityService
-          
+          MARIADB_AUTHENTICATION_PLUGIN: mysql_native_password 
+          MARIADB_INNODB_USE_NATIVE_AIO: 0
+        
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mariadb-admin ping -p password"
+          --health-cmd="mariadb-admin ping -uroot -ppassword" 
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
+          --ulimit memlock=262144:262144
     
     steps:
       - uses: actions/checkout@v4
