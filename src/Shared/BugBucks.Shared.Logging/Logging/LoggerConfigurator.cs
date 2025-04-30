@@ -4,13 +4,23 @@ using Elastic.Ingest.Elasticsearch;
 using Elastic.Ingest.Elasticsearch.DataStreams;
 using Elastic.Serilog.Sinks;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
 
 public static class LoggerConfigurator
 {
-    public static void ConfigureLogger(IConfiguration config)
+    public static void ConfigureLogger(IConfiguration config, IHostEnvironment env)
     {
+        if (env.IsEnvironment("Test"))
+        {
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .WriteTo.Console()
+                .CreateLogger();
+            return;
+        }
+
         var defaultLevel = config.GetValue("Logging:MinimumLevel", LogEventLevel.Debug);
         var elasticLevel = config.GetValue("ElasticsearchOptions:MinimumLevel", defaultLevel);
         var seqLevel = config.GetValue("Seq:MinimumLevel", defaultLevel);

@@ -11,7 +11,7 @@ public static class ServiceCollectionExtensions
     public static WebApplicationBuilder AddAppLogging(this WebApplicationBuilder builder)
     {
         // Configure Serilog from configuration
-        LoggerConfigurator.ConfigureLogger(builder.Configuration);
+        LoggerConfigurator.ConfigureLogger(builder.Configuration, builder.Environment);
 
         // Replace default logging
         builder.Host.UseSerilog();
