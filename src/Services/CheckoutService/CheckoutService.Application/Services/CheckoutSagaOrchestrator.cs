@@ -1,10 +1,11 @@
 using System.Text.Json;
 using BugBucks.Shared.Logging.Interfaces;
-using BugBucks.Shared.Messaging.Events;
+using BugBucks.Shared.Messaging.Contracts.DTOs;
+using BugBucks.Shared.Messaging.Contracts.Events;
 using CheckoutService.Domain.Entities;
+using CheckoutService.Domain.Interfaces;
 using CheckoutService.Infrastructure.Data;
 using CheckoutService.Infrastructure.Entities;
-using CheckoutService.Infrastructure.Repositories;
 
 namespace CheckoutService.Application.Services;
 
@@ -31,28 +32,36 @@ public class CheckoutSagaOrchestrator : ICheckoutSagaOrchestrator
     {
         var saga = await _repo.LoadAsync(evt.OrderId);
 
-        _logger.LogDebug("Orchestrator handling {Type} for OrderId={OrderId}, current state={State}",
+        _logger.LogDebug("Handling {Type} for OrderId={OrderId}, state={State}",
             nameof(OrderCreatedEvent), evt.OrderId, saga.State);
 
         saga.Transition(SagaTrigger.OrderCreated);
         await _repo.SaveAsync(saga);
 
         // Enqueue PaymentRequestedEvent
-        var paymentRequested = new PaymentRequestedEvent(evt.OrderId, /* paymentDetails */
-            string.Empty, /* idempotencyKey */ Guid.NewGuid().ToString());
+        var paymentReq = new PaymentRequestedEvent(
+            evt.OrderId,
+            string.Empty,
+            Guid.NewGuid().ToString());
+
         var outbox = new OutboxMessage
         {
             Id = Guid.NewGuid(),
             AggregateType = nameof(CheckoutSaga),
             AggregateId = evt.OrderId,
             Type = nameof(PaymentRequestedEvent),
-            Content = JsonSerializer.Serialize(paymentRequested),
+            Content = JsonSerializer.Serialize(paymentReq),
             OccurredAt = DateTime.UtcNow
         };
         _db.OutboxMessages.Add(outbox);
         await _db.SaveChangesAsync();
 
         _logger.LogDebug("Saga {OrderId} transitioned to {NewState}", evt.OrderId, saga.State);
+    }
+
+    public Task HandleAsync(PaymentRequestedEvent evt)
+    {
+        throw new NotImplementedException();
     }
 
     public async Task HandleAsync(PaymentSucceededEvent evt)
@@ -62,14 +71,15 @@ public class CheckoutSagaOrchestrator : ICheckoutSagaOrchestrator
         await _repo.SaveAsync(saga);
 
         // Enqueue InventoryReserveRequestedEvent
-        var invRequest = new InventoryReserveRequestedEvent(evt.OrderId, Array.Empty<InventoryItem>());
+        var invReq = new InventoryReserveRequestedEvent(evt.OrderId, Array.Empty<InventoryItem>());
+
         var outbox = new OutboxMessage
         {
             Id = Guid.NewGuid(),
             AggregateType = nameof(CheckoutSaga),
             AggregateId = evt.OrderId,
             Type = nameof(InventoryReserveRequestedEvent),
-            Content = JsonSerializer.Serialize(invRequest),
+            Content = JsonSerializer.Serialize(invReq),
             OccurredAt = DateTime.UtcNow
         };
         _db.OutboxMessages.Add(outbox);
@@ -85,6 +95,7 @@ public class CheckoutSagaOrchestrator : ICheckoutSagaOrchestrator
 
         // Enqueue OrderCompensatedEvent
         var comp = new OrderCompensatedEvent(evt.OrderId, evt.ErrorCode);
+
         var outbox = new OutboxMessage
         {
             Id = Guid.NewGuid(),
@@ -98,6 +109,11 @@ public class CheckoutSagaOrchestrator : ICheckoutSagaOrchestrator
         await _db.SaveChangesAsync();
     }
 
+    public Task HandleAsync(InventoryReserveRequestedEvent evt)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task HandleAsync(InventoryReservedEvent evt)
     {
         var saga = await _repo.LoadAsync(evt.OrderId);
@@ -106,6 +122,7 @@ public class CheckoutSagaOrchestrator : ICheckoutSagaOrchestrator
 
         // Enqueue OrderCompletedEvent
         var complete = new OrderCompletedEvent(evt.OrderId);
+
         var outbox = new OutboxMessage
         {
             Id = Guid.NewGuid(),
@@ -128,6 +145,7 @@ public class CheckoutSagaOrchestrator : ICheckoutSagaOrchestrator
 
         // Enqueue OrderCompensatedEvent
         var comp = new OrderCompensatedEvent(evt.OrderId, evt.Reason);
+
         var outbox = new OutboxMessage
         {
             Id = Guid.NewGuid(),

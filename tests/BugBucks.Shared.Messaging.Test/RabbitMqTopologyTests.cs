@@ -1,9 +1,9 @@
 using System.Text;
-using BugBucks.Shared.Messaging.Constants;
-using BugBucks.Shared.Messaging.Topology;
+using BugBucks.Shared.Messaging.Contracts.Events;
+using BugBucks.Shared.Messaging.Infrastructure.RabbitMq;
 using RabbitMQ.Client;
 
-namespace BugBucks.Shared.Messaging.Test;
+namespace BugBucks.Shared.Messaging.Tests;
 
 public class RabbitMqTopologyTests
 {
@@ -11,8 +11,9 @@ public class RabbitMqTopologyTests
     private const int Port = 5672;
 
     [Fact]
-    public async Task DeclareCheckoutTopologyAsync_CreatesQueuesAndExchanges()
+    public async Task DeclareTopologyAsync_CreatesQueuesAndExchanges()
     {
+        // RabbitMQ bağlantı fabrikası
         var factory = new ConnectionFactory
         {
             HostName = HostName,
@@ -24,27 +25,27 @@ public class RabbitMqTopologyTests
         await using var connection = await factory.CreateConnectionAsync();
         await using var channel = await connection.CreateChannelAsync();
 
-        await channel.DeclareCheckoutTopologyAsync();
+        await RabbitMqTopology.DeclareAsync(channel);
 
-        var testMessage = DateTime.UtcNow.ToString("O");
+        var testMessage = "TestMessage-" + Guid.NewGuid();
         var body = Encoding.UTF8.GetBytes(testMessage);
-        var props = new BasicProperties();
-        props.DeliveryMode = DeliveryModes.Persistent;
+        var props = new BasicProperties
+        {
+            Persistent = true
+        };
 
         await channel.BasicPublishAsync(
-            RabbitMQConstants.CheckoutExchange,
-            RabbitMQConstants.CheckoutRoutingKey,
-            true,
+            RabbitMqTopology.ExchangeName,
+            "order.created",
+            false,
             props,
             body
         );
 
-
         var getResult = await channel.BasicGetAsync(
-            RabbitMQConstants.CheckoutQueue,
+            RabbitMqTopology.QueuePrefix + nameof(OrderCreatedEvent),
             true
         );
-
 
         Assert.NotNull(getResult);
         var received = Encoding.UTF8.GetString(getResult.Body.ToArray());

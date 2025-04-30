@@ -1,14 +1,9 @@
 using CheckoutService.Domain.Entities;
+using CheckoutService.Domain.Interfaces;
 using CheckoutService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace CheckoutService.Infrastructure.Repositories;
-
-public interface ICheckoutSagaRepository
-{
-    Task<CheckoutSaga> LoadAsync(Guid orderId);
-    Task SaveAsync(CheckoutSaga saga);
-}
 
 public class CheckoutSagaRepository : ICheckoutSagaRepository
 {
@@ -22,7 +17,6 @@ public class CheckoutSagaRepository : ICheckoutSagaRepository
     public async Task<CheckoutSaga> LoadAsync(Guid orderId)
     {
         var saga = await _db.CheckoutSagas
-            .AsNoTracking()
             .FirstOrDefaultAsync(s => s.OrderId == orderId);
 
         if (saga is null)

@@ -15,10 +15,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Publishers\"/>
-    </ItemGroup>
-
-    <ItemGroup>
         <Compile Remove="Publishers\RabbitMqPublisher.cs"/>
     </ItemGroup>
 

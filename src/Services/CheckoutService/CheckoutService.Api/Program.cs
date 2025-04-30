@@ -1,76 +1,83 @@
 using BugBucks.Shared.Logging.Extensions;
+using BugBucks.Shared.Messaging.Abstractions.Messaging;
+using BugBucks.Shared.Messaging.Contracts.Events;
 using BugBucks.Shared.Messaging.Extensions;
-using BugBucks.Shared.Messaging.Services;
-using BugBucks.Shared.Messaging.Topology;
+using BugBucks.Shared.Messaging.Infrastructure.RabbitMq;
 using CheckoutService.Api.HostedServices;
 using CheckoutService.Application.Models;
 using CheckoutService.Application.Services;
+using CheckoutService.Domain.Interfaces;
 using CheckoutService.Infrastructure.Data;
 using CheckoutService.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
-using RabbitMQ.Client;
 using Serilog;
 using Serilog.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Logging
+// 1. Logging
 builder.AddAppLogging();
 
-// RabbitMQ DI and config
-builder.Services.AddRabbitMq(builder.Configuration);
+// 2. Messaging
+builder.Services.AddSharedMessaging(builder.Configuration);
 
-// EF Core: CheckoutSagaDbContext
+// 3. EF Core
 var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<CheckoutSagaDbContext>(opts =>
     opts.UseMySql(connStr, ServerVersion.AutoDetect(connStr)));
 
-// Repositories and orchestrator
+// 4. Repo & Orchestrator
 builder.Services.AddScoped<ICheckoutSagaRepository, CheckoutSagaRepository>();
 builder.Services.AddScoped<ICheckoutSagaOrchestrator, CheckoutSagaOrchestrator>();
 
-// Saga Publisher and Consumer
-builder.Services.AddSingleton<CheckoutSagaPublisher>();
+// 5. Hosted Services (Saga Consumer + Outbox)
 builder.Services.AddHostedService<CheckoutSagaConsumer>();
-
-// Outbox Processor for reliable message delivery
 builder.Services.AddHostedService<OutboxProcessor>();
 
 var app = builder.Build();
 
-// Log startup
+// 6. Startup log
 Log.Information("Application starting up...");
 
+// 7. Dev exception page
 if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 
-// Use correlation ID middleware for logging
-app.Use(async (context, next) =>
+// 8. Correlation ID middleware
+app.Use(async (ctx, next) =>
 {
-    var correlationId = context.Request.Headers["X-Correlation-ID"].FirstOrDefault()
-                        ?? Guid.NewGuid().ToString();
-    using (LogContext.PushProperty("CorrelationId", correlationId))
+    var cid = ctx.Request.Headers["X-Correlation-ID"].ToString();
+    if (string.IsNullOrWhiteSpace(cid))
+        cid = Guid.NewGuid().ToString();
+    using (LogContext.PushProperty("CorrelationId", cid))
     {
         await next();
     }
 });
 
-// Declare RabbitMQ topology on startup
+// 9. RabbitMQ Topology
+
 app.Lifetime.ApplicationStarted.Register(async () =>
 {
     using var scope = app.Services.CreateScope();
-    var connection = scope.ServiceProvider.GetRequiredService<IConnection>();
-    var channel = await connection.CreateChannelAsync().ConfigureAwait(false);
-    await channel.DeclareCheckoutTopologyAsync().ConfigureAwait(false);
+    var factory = scope.ServiceProvider
+        .GetRequiredService<IRabbitMqConnectionFactory>();
+    var connection = await factory.CreateConnectionAsync();
+    await using var channel = await connection.CreateChannelAsync();
+
+    await RabbitMqTopology.DeclareAsync(channel);
 });
 
-// API endpoint for starting checkout
-app.MapPost("/checkout", async (CheckoutRequest req, CheckoutSagaPublisher publisher) =>
+// 10. API endpoint
+app.MapPost("/checkout", async (CheckoutRequest req, IMessagePublisher publisher) =>
 {
     var orderId = Guid.NewGuid();
-    // Publish initial OrderCreatedEvent
-    await publisher.PublishOrderCreatedAsync(orderId, req.CustomerId, req.TotalAmount);
-    Log.Debug("Received checkout request for OrderId={OrderId}", orderId);
+    // Generic event publish
+    await publisher.PublishAsync(new OrderCreatedEvent(
+        orderId,
+        req.CustomerId,
+        req.TotalAmount));
+    Log.Debug("Checkout requested, OrderId={OrderId}", orderId);
     return Results.Accepted($"/checkout/{orderId}");
 });
 

@@ -1,30 +1,30 @@
-using System.Text;
+using System.Text.Json;
 using BugBucks.Shared.Logging.Interfaces;
-using BugBucks.Shared.Messaging.Constants;
-using BugBucks.Shared.Messaging.Topology;
+using BugBucks.Shared.Messaging.Abstractions.Messaging;
+using BugBucks.Shared.Messaging.Contracts.Events;
 using CheckoutService.Infrastructure.Data;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using RabbitMQ.Client;
 
 namespace CheckoutService.Application.Services;
 
 /// <summary>
-///     Background service that publishes pending outbox messages to RabbitMQ.
+///     Background service that publishes pending outbox messages to RabbitMQ
+///     using IMessagePublisher.
 /// </summary>
 public class OutboxProcessor : BackgroundService
 {
-    private readonly IChannel _channel;
     private readonly IAppLogger<OutboxProcessor> _logger;
+    private readonly IMessagePublisher _publisher;
     private readonly IServiceScopeFactory _scopeFactory;
 
-    public OutboxProcessor(IServiceScopeFactory scopeFactory, IConnection connection,
+    public OutboxProcessor(
+        IServiceScopeFactory scopeFactory,
+        IMessagePublisher publisher,
         IAppLogger<OutboxProcessor> logger)
     {
         _scopeFactory = scopeFactory;
-        // use a direct channel for pub/sub
-        _channel = connection.CreateChannelAsync().GetAwaiter().GetResult();
-        _channel.DeclareCheckoutTopologyAsync().GetAwaiter().GetResult();
+        _publisher = publisher;
         _logger = logger;
     }
 
@@ -48,32 +48,35 @@ public class OutboxProcessor : BackgroundService
                 {
                     _logger.LogDebug("Publishing outbox message {Id} of type {Type}", msg.Id, msg.Type);
 
-                    var props = new BasicProperties();
-                    props.Persistent = true;
-                    props.Type = msg.Type;
-                    props.MessageId = msg.Id.ToString();
+                    object @event = msg.Type switch
+                    {
+                        nameof(PaymentRequestedEvent) =>
+                            JsonSerializer.Deserialize<PaymentRequestedEvent>(msg.Content)!,
+                        nameof(InventoryReserveRequestedEvent) => JsonSerializer
+                            .Deserialize<InventoryReserveRequestedEvent>(msg.Content)!,
+                        nameof(InventoryReservedEvent) => JsonSerializer.Deserialize<InventoryReservedEvent>(
+                            msg.Content)!,
+                        nameof(InventoryFailedEvent) => JsonSerializer.Deserialize<InventoryFailedEvent>(msg.Content)!,
+                        nameof(OrderCompletedEvent) => JsonSerializer.Deserialize<OrderCompletedEvent>(msg.Content)!,
+                        nameof(OrderCompensatedEvent) =>
+                            JsonSerializer.Deserialize<OrderCompensatedEvent>(msg.Content)!,
+                        _ => throw new InvalidOperationException($"Unknown event type {msg.Type}")
+                    };
 
-                    var body = Encoding.UTF8.GetBytes(msg.Content);
 
-                    await _channel.BasicPublishAsync(
-                            RabbitMQConstants.CheckoutExchange,
-                            RabbitMQConstants.CheckoutRoutingKey,
-                            true,
-                            props,
-                            body)
-                        .ConfigureAwait(false);
+                    await _publisher.PublishAsync((dynamic)@event);
 
+                    // Mark processed
                     msg.Processed = true;
                     msg.ProcessedAt = DateTime.UtcNow;
                     db.Update(msg);
 
                     _logger.LogDebug("Marking outbox message {Id} processed", msg.Id);
-
                     await db.SaveChangesAsync(stoppingToken);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, ex.Message);
+                    _logger.LogError(ex, "Error publishing outbox message {Id}", msg.Id);
                 }
 
             await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);

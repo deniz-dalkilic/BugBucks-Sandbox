@@ -1,0 +1,17 @@
+using BugBucks.Shared.Messaging.Abstractions.Messaging;
+using BugBucks.Shared.Messaging.Infrastructure.RabbitMq;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace BugBucks.Shared.Messaging.Extensions;
+
+public static class ServiceCollectionExtensions
+{
+    public static IServiceCollection AddSharedMessaging(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddSingleton<IRabbitMqConnectionFactory, RabbitMqConnectionFactory>();
+        services.AddSingleton<IMessagePublisher, RabbitMqPublisher>();
+        services.AddSingleton<IMessageConsumer, RabbitMqConsumer>();
+        return services;
+    }
+}

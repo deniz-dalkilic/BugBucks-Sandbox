@@ -1,4 +1,4 @@
-using BugBucks.Shared.Messaging.Events;
+using BugBucks.Shared.Messaging.Contracts.Events;
 
 namespace CheckoutService.Application.Services;
 
@@ -8,8 +8,10 @@ namespace CheckoutService.Application.Services;
 public interface ICheckoutSagaOrchestrator
 {
     Task HandleAsync(OrderCreatedEvent evt);
+    Task HandleAsync(PaymentRequestedEvent evt);
     Task HandleAsync(PaymentSucceededEvent evt);
     Task HandleAsync(PaymentFailedEvent evt);
+    Task HandleAsync(InventoryReserveRequestedEvent evt);
     Task HandleAsync(InventoryReservedEvent evt);
     Task HandleAsync(InventoryFailedEvent evt);
     Task HandleAsync(OrderCompletedEvent evt);
