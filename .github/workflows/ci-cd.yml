@@ -36,12 +36,18 @@ jobs:
           --ulimit memlock=262144:262144
           --security-opt seccomp=unconfined
 
-      rabbitmq: 
-        image: rabbitmq:management
+
+      rabbitmq:
+        image: rabbitmq:4-management
         ports:
           - 5672:5672
           - 15672:15672
-
+        options: >-
+          --health-cmd="rabbitmqctl status"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+          
     steps:
       - uses: actions/checkout@v4
 
@@ -58,7 +64,6 @@ jobs:
       - name: Test
         run: dotnet test 
           --configuration Release 
-          --no-build 
           --filter "FullyQualifiedName!~RabbitMqTopologyTests" 
           --logger "trx;LogFileName=test-results.trx"
 

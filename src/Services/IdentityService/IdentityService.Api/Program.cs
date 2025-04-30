@@ -19,10 +19,18 @@ builder.Services.AddVaultClient();
 
 builder.AddAppLogging();
 
-// Configure DbContext with MySQL (Pomelo)
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+if (builder.Environment.IsEnvironment("Test"))
+{
+    builder.Services.AddDbContext<ApplicationDbContext>(opts =>
+        opts.UseInMemoryDatabase("TestDb"));
+}
+else
+{
+    // Configure DbContext with MySQL (Pomelo)
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    builder.Services.AddDbContext<ApplicationDbContext>(opts =>
+        opts.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+}
 
 // Configure ASP.NET Core Identity with ApplicationUser using integer primary key
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>()
