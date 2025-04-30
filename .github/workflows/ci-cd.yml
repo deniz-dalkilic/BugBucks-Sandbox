@@ -10,10 +10,26 @@ env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ${{ github.repository_owner }}/bugbucks
   ASPNETCORE_ENVIRONMENT: Test
+  ConnectionStrings__DefaultConnection: "Server=127.0.0.1;Port=3306;Database=IdentityService;Uid=root;Pwd=password;"
 
 jobs:
   build-test:
+    
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mariadb:11.7
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: IdentityService
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -ppassword"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    
     steps:
       - uses: actions/checkout@v4
 
