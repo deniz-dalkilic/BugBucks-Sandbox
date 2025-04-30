@@ -21,6 +21,7 @@ public static class LoggerConfigurator
             return;
         }
 
+
         var defaultLevel = config.GetValue("Logging:MinimumLevel", LogEventLevel.Debug);
         var elasticLevel = config.GetValue("ElasticsearchOptions:MinimumLevel", defaultLevel);
         var seqLevel = config.GetValue("Seq:MinimumLevel", defaultLevel);
