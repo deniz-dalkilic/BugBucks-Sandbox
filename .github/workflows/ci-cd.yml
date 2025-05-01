@@ -108,7 +108,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.context }}
-          file: Dockerfile
           push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/bugbucks-${{ matrix.name }}:${{ github.sha }}
+          tags: ghcr.io/${{ github.repository_owner }}/bugbucks-${{ matrix.name }}:${{ github.sha }}
+      
