@@ -7,11 +7,11 @@ on:
     branches: ["main"]
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_PREFIX: ${{ github.repository_owner }}/bugbucks
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
   ASPNETCORE_ENVIRONMENT: Test
   ConnectionStrings__DefaultConnection: "Server=localhost;Port=3306;Database=IdentityService;Uid=root;Pwd=password;"
   RABBITMQ_HOST: rabbitmq
+
 jobs:
   build-test:
     runs-on: ubuntu-latest
@@ -23,20 +23,16 @@ jobs:
           MARIADB_USER: user
           MARIADB_PASSWORD: password
           MARIADB_DATABASE: IdentityService
-          MARIADB_AUTHENTICATION_PLUGIN: mysql_native_password 
+          MARIADB_AUTHENTICATION_PLUGIN: mysql_native_password
           MARIADB_INNODB_USE_NATIVE_AIO: 0
           MARIADB_AUTO_UPGRADE: 1
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mariadb-admin ping -uroot -ppassword" 
+          --health-cmd="mariadb-admin ping -uroot -ppassword"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
-          --ulimit memlock=262144:262144
-          --security-opt seccomp=unconfined
-
-
       rabbitmq:
         image: rabbitmq:4-management
         ports:
@@ -47,28 +43,28 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
-          
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-dotnet@v4
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 9.0.x
 
-      - name: Restore
+      - name: Restore dependencies
         run: dotnet restore
 
-      - name: Build
+      - name: Build solution
         run: dotnet build --configuration Release --no-restore
 
-      - name: Test
+      - name: Run tests (skip RabbitMqTopologyTests)
         run: dotnet test 
-          --configuration Release
-          --no-build
+          --configuration Release 
+          --no-build 
           --filter "FullyQualifiedName!~RabbitMqTopologyTests" 
           --logger "trx;LogFileName=test-results.trx"
-        
-       
 
       - name: Upload Test Results
         if: always()
@@ -81,8 +77,8 @@ jobs:
     needs: build-test
     runs-on: ubuntu-latest
     permissions:
-      packages: write
       contents: read
+      packages: write
     strategy:
       matrix:
         service:
@@ -98,21 +94,21 @@ jobs:
             context: src/Gateways/Gateway.Api
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      - name: Log in GHCR
+      - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build & Push
+      - name: Build & Push ${{ matrix.service.name }}
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ${{ matrix.service.context }}/Dockerfile            
+          context: ${{ matrix.service.context }}
+          file: Dockerfile
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/bugbucks-${{ matrix.service.name }}:${{ github.sha }}
-  
