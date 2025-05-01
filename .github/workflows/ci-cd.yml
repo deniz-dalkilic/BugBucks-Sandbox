@@ -101,8 +101,7 @@ jobs:
       - name: Build & Push ${{ matrix.name }}
         uses: docker/build-push-action@v5
         with:
-          context: ${{ matrix.path }}
-          #context: .                                
+          context: .                                
           file: ${{ matrix.path }}/Dockerfile       
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/bugbucks-${{ matrix.name }}:${{ github.sha }}
