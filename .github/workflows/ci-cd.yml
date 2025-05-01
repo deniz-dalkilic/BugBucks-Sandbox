@@ -96,7 +96,7 @@ jobs:
             context: src/Services/PaymentService/PaymentService.Api
           - name: gateway-api
             context: src/Gateways/Gateway.Api
-    
+
     steps:
       - uses: actions/checkout@v4
 
@@ -111,8 +111,8 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.service.context }}
-          file: ${{ matrix.service.context }}/Dockerfile
+          file: Dockerfile             
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/bugbucks-${{ matrix.service.name }}:${{ github.sha }}
-    
+  
