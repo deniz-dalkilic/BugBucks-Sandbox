@@ -2,9 +2,9 @@ name: CI/CD
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 env:
   DOTNET_CLI_TELEMETRY_OPTOUT: "1"
@@ -24,8 +24,7 @@ jobs:
           MARIADB_PASSWORD: password
           MARIADB_DATABASE: IdentityService
           MARIADB_AUTHENTICATION_PLUGIN: mysql_native_password
-        ports:
-          - 3306:3306
+        ports: ["3306:3306"]
         options: >-
           --health-cmd="mariadb-admin ping -uroot -ppassword"
           --health-interval=10s
@@ -34,9 +33,7 @@ jobs:
 
       rabbitmq:
         image: rabbitmq:4-management
-        ports:
-          - 5672:5672
-          - 15672:15672
+        ports: ["5672:5672","15672:15672"]
         options: >-
           --health-cmd="rabbitmqctl status"
           --health-interval=10s
@@ -54,13 +51,13 @@ jobs:
         run: dotnet restore
 
       - name: Build
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build --configuration Release --no-restore
 
       - name: Test (skip RabbitMqTopologyTests)
         run: |
           dotnet test \
-            --no-build \
             --configuration Release \
+            --no-build \
             --filter "FullyQualifiedName!~RabbitMqTopologyTests" \
             --logger "trx;LogFileName=test-results.trx"
 
@@ -71,6 +68,7 @@ jobs:
           name: test-results
           path: '**/TestResults/*.trx'
 
+
   build-and-push:
     needs: build-and-test
     runs-on: ubuntu-latest
@@ -79,18 +77,19 @@ jobs:
       packages: write
 
     strategy:
+      fail-fast: false
       matrix:
         include:
           - name: checkout-service
-            path: src/Services/CheckoutService/CheckoutService.Api
+            context: src/Services/CheckoutService/CheckoutService.Api
           - name: identity-service
-            path: src/Services/IdentityService/IdentityService.Api
+            context: src/Services/IdentityService/IdentityService.Api
           - name: order-service
-            path: src/Services/OrderService/OrderService.Api
+            context: src/Services/OrderService/OrderService.Api
           - name: payment-service
-            path: src/Services/PaymentService/PaymentService.Api
+            context: src/Services/PaymentService/PaymentService.Api
           - name: gateway-api
-            path: src/Gateways/Gateway.Api
+            context: src/Gateways/Gateway.Api
 
     steps:
       - uses: actions/checkout@v4
@@ -108,8 +107,8 @@ jobs:
       - name: Build & Push ${{ matrix.name }}
         uses: docker/build-push-action@v5
         with:
-          context: ${{ matrix.path }}
-          file: Dockerfile               
+          context: ${{ matrix.context }}
+          file: Dockerfile
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/bugbucks-${{ matrix.name }}:${{ github.sha }}
