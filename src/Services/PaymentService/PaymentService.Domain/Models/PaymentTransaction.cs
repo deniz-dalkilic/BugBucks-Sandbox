@@ -12,5 +12,5 @@ public class PaymentTransaction
     public PaymentStatus Status { get; set; }
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
-    public Invoice Invoice { get; init; }
+    public Invoice Invoice { get; set; }
 }
