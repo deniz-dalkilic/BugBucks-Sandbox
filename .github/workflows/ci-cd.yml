@@ -13,7 +13,7 @@ env:
   RABBITMQ_HOST: rabbitmq
 
 jobs:
-  build-test:
+  build-and-test:
     runs-on: ubuntu-latest
     services:
       mysql:
@@ -24,8 +24,6 @@ jobs:
           MARIADB_PASSWORD: password
           MARIADB_DATABASE: IdentityService
           MARIADB_AUTHENTICATION_PLUGIN: mysql_native_password
-          MARIADB_INNODB_USE_NATIVE_AIO: 0
-          MARIADB_AUTO_UPGRADE: 1
         ports:
           - 3306:3306
         options: >-
@@ -33,8 +31,6 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
-          --ulimit memlock=262144:262144
-          --security-opt seccomp=unconfined
 
       rabbitmq:
         image: rabbitmq:4-management
@@ -51,7 +47,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup .NET SDK
+      - name: Setup .NET 9 SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
@@ -60,48 +56,49 @@ jobs:
         run: dotnet restore
 
       - name: Build solution
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build --no-restore --configuration Release
 
       - name: Run tests (skip RabbitMqTopologyTests)
         run: |
           dotnet test \
-            --configuration Release \
             --no-build \
+            --configuration Release \
             --filter "FullyQualifiedName!~RabbitMqTopologyTests" \
             --logger "trx;LogFileName=test-results.trx"
 
-      - name: Upload Test Results
+      - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: '**/TestResults/*.trx'
 
-  docker-build-push:
-    needs: build-test
+  build-and-push:
+    needs: build-and-test
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+
     strategy:
       matrix:
-        service:
+        include:
           - name: checkout-service
-            context: src/Services/CheckoutService/CheckoutService.Api
+            path: src/Services/CheckoutService/CheckoutService.Api
           - name: identity-service
-            context: src/Services/IdentityService/IdentityService.Api
+            path: src/Services/IdentityService/IdentityService.Api
           - name: order-service
-            context: src/Services/OrderService/OrderService.Api
+            path: src/Services/OrderService/OrderService.Api
           - name: payment-service
-            context: src/Services/PaymentService/PaymentService.Api
+            path: src/Services/PaymentService/PaymentService.Api
           - name: gateway-api
-            context: src/Gateways/Gateway.Api
+            path: src/Gateways/Gateway.Api
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up QEMU (for multi-platform, optional)
+      - name: Set up QEMU (for cross-platform, optional)
         uses: docker/setup-qemu-action@v2
 
       - name: Set up Docker Buildx
@@ -114,11 +111,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build & Push ${{ matrix.service.name }}
+      - name: Build & Push ${{ matrix.name }}
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ${{ matrix.service.context }}/Dockerfile
+          context: ${{ matrix.path }}
+          file: ${{ matrix.path }}/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/bugbucks-${{ matrix.service.name }}:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/bugbucks-${{ matrix.name }}:${{ github.sha }}
