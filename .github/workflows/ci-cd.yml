@@ -2,9 +2,9 @@ name: CI/CD
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 env:
   DOTNET_CLI_TELEMETRY_OPTOUT: "1"
@@ -24,7 +24,8 @@ jobs:
           MARIADB_PASSWORD: password
           MARIADB_DATABASE: IdentityService
           MARIADB_AUTHENTICATION_PLUGIN: mysql_native_password
-        ports: ["3306:3306"]
+        ports:
+          - 3306:3306
         options: >-
           --health-cmd="mariadb-admin ping -uroot -ppassword"
           --health-interval=10s
@@ -33,7 +34,9 @@ jobs:
 
       rabbitmq:
         image: rabbitmq:4-management
-        ports: ["5672:5672","15672:15672"]
+        ports:
+          - 5672:5672
+          - 15672:15672
         options: >-
           --health-cmd="rabbitmqctl status"
           --health-interval=10s
@@ -106,7 +109,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.path }}
-          file: ${{ matrix.path }}/Dockerfile
+          file: Dockerfile               
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/bugbucks-${{ matrix.name }}:${{ github.sha }}
