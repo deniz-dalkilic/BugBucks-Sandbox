@@ -104,8 +104,9 @@ jobs:
       - name: Build & Push
         uses: docker/build-push-action@v5
         with:
-          context: ${{ matrix.service }}
-          file: ${{ matrix.service }}/Dockerfile
+          context: ${{ matrix.services.context }}
+          file: ${{ matrix.services.context }}/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${{ matrix.service }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${{ matrix.services.name }}:${{ github.sha }}
+      
