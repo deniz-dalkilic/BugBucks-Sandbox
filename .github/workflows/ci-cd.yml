@@ -63,9 +63,12 @@ jobs:
 
       - name: Test
         run: dotnet test 
-          --configuration Release 
+          --configuration Release
+          --no-build
           --filter "FullyQualifiedName!~RabbitMqTopologyTests" 
           --logger "trx;LogFileName=test-results.trx"
+        
+       
 
       - name: Upload Test Results
         if: always()
