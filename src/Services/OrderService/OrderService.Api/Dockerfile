@@ -24,11 +24,11 @@ COPY ["src/Shared/BugBucks.Shared.Messaging/BugBucks.Shared.Messaging.csproj", "
 RUN dotnet restore "src/Services/OrderService/OrderService.Api/OrderService.Api.csproj"
 COPY . .
 WORKDIR "/src/src/Services/OrderService/OrderService.Api"
-RUN dotnet build "OrderService.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "OrderService.Api.csproj" -c Release -o /app/build
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "OrderService.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "OrderService.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
