@@ -8,7 +8,7 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["src/Gateways/Gateway.Api/Gateway.Api.csproj", "src/Gateways/Gateway.Api/"]
-COPY ["src/Shared/BugBucks.Shared.VaultClient/BugBucks.Shared.VaultClient.csproj", "src/Shared/BugBucks.Shared.VaultClient/"]
+COPY ["src/Shared/BugBucks.Shared.Vault/BugBucks.Shared.Vault.csproj", "src/Shared/BugBucks.Shared.Vault/"]
 COPY ["src/Shared/BugBucks.Shared.Logging/BugBucks.Shared.Logging.csproj", "src/Shared/BugBucks.Shared.Logging/"]
 RUN dotnet restore "src/Gateways/Gateway.Api/Gateway.Api.csproj"
 COPY . .

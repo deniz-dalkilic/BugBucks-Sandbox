@@ -8,7 +8,7 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["src/Services/PaymentService/PaymentService.Api/PaymentService.Api.csproj", "src/Services/PaymentService/PaymentService.Api/"]
-COPY ["src/Shared/BugBucks.Shared.VaultClient/BugBucks.Shared.VaultClient.csproj", "src/Shared/BugBucks.Shared.VaultClient/"]
+COPY ["src/Shared/BugBucks.Shared.Vault/BugBucks.Shared.Vault.csproj", "src/Shared/BugBucks.Shared.Vault/"]
 COPY ["src/Services/PaymentService/PaymentService.Application/PaymentService.Application.csproj", "src/Services/PaymentService/PaymentService.Application/"]
 COPY ["src/Services/PaymentService/PaymentService.Domain/PaymentService.Domain.csproj", "src/Services/PaymentService/PaymentService.Domain/"]
 COPY ["src/Services/PaymentService/PaymentService.Infrastructure/PaymentService.Infrastructure.csproj", "src/Services/PaymentService/PaymentService.Infrastructure/"]

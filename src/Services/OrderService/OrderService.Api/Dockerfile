@@ -8,7 +8,7 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["src/Services/OrderService/OrderService.Api/OrderService.Api.csproj", "src/Services/OrderService/OrderService.Api/"]
-COPY ["src/Shared/BugBucks.Shared.VaultClient/BugBucks.Shared.VaultClient.csproj", "src/Shared/BugBucks.Shared.VaultClient/"]
+COPY ["src/Shared/BugBucks.Shared.Vault/BugBucks.Shared.Vault.csproj", "src/Shared/BugBucks.Shared.Vault/"]
 COPY ["src/Services/IdentityService/IdentityService.Api/IdentityService.Api.csproj", "src/Services/IdentityService/IdentityService.Api/"]
 COPY ["src/Services/IdentityService/IdentityService.Infrastructure/IdentityService.Infrastructure.csproj", "src/Services/IdentityService/IdentityService.Infrastructure/"]
 COPY ["src/Services/IdentityService/IdentityService.Application/IdentityService.Application.csproj", "src/Services/IdentityService/IdentityService.Application/"]
