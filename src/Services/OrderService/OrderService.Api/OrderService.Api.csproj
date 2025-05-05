@@ -23,6 +23,7 @@
         <ProjectReference Include="..\..\..\Shared\BugBucks.Shared.Logging\BugBucks.Shared.Logging.csproj"/>
         <ProjectReference Include="..\..\..\Shared\BugBucks.Shared.Messaging\BugBucks.Shared.Messaging.csproj"/>
         <ProjectReference Include="..\..\..\Shared\BugBucks.Shared.VaultClient\BugBucks.Shared.VaultClient.csproj"/>
+        <ProjectReference Include="..\..\..\Shared\BugBucks.Shared.Web\BugBucks.Shared.Web.csproj"/>
         <ProjectReference Include="..\OrderService.Application\OrderService.Application.csproj"/>
         <ProjectReference Include="..\OrderService.Infrastructure\OrderService.Infrastructure.csproj"/>
     </ItemGroup>

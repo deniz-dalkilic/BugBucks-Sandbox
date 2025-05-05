@@ -3,6 +3,8 @@ using BugBucks.Shared.Messaging.Abstractions.Messaging;
 using BugBucks.Shared.Messaging.Contracts.Events;
 using BugBucks.Shared.Messaging.Extensions;
 using BugBucks.Shared.Messaging.Infrastructure.RabbitMq;
+using BugBucks.Shared.VaultClient.Extensions;
+using BugBucks.Shared.Web.Extensions;
 using CheckoutService.Api.HostedServices;
 using CheckoutService.Application.Models;
 using CheckoutService.Application.Services;
@@ -11,52 +13,45 @@ using CheckoutService.Infrastructure.Data;
 using CheckoutService.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
-using Serilog.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Logging
-builder.AddAppLogging();
+builder.Services.AddAppLogging(builder.Configuration, builder.Environment);
 
-// 2. Messaging
+builder.Host.UseSerilog();
+
+builder.Services.AddBugBucksWeb();
+
+builder.Services.AddVaultClient();
+
+// Messaging
 builder.Services.AddSharedMessaging(builder.Configuration);
 
-// 3. EF Core
+// EF Core
 var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<CheckoutSagaDbContext>(opts =>
     opts.UseMySql(connStr, ServerVersion.AutoDetect(connStr)));
 
-// 4. Repo & Orchestrator
+// Repo & Orchestrator
 builder.Services.AddScoped<ICheckoutSagaRepository, CheckoutSagaRepository>();
 builder.Services.AddScoped<ICheckoutSagaOrchestrator, CheckoutSagaOrchestrator>();
 
-// 5. Hosted Services (Saga Consumer + Outbox)
+// Hosted Services (Saga Consumer + Outbox)
 builder.Services.AddHostedService<CheckoutSagaConsumer>();
 builder.Services.AddHostedService<OutboxProcessor>();
 
+builder.Services.AddBugBucksWeb();
+
 var app = builder.Build();
 
-// 6. Startup log
+// Startup log
 Log.Information("Application starting up...");
 
-// 7. Dev exception page
+// Dev exception page
 if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 
-// 8. Correlation ID middleware
-app.Use(async (ctx, next) =>
-{
-    var cid = ctx.Request.Headers["X-Correlation-ID"].ToString();
-    if (string.IsNullOrWhiteSpace(cid))
-        cid = Guid.NewGuid().ToString();
-    using (LogContext.PushProperty("CorrelationId", cid))
-    {
-        await next();
-    }
-});
-
-// 9. RabbitMQ Topology
-
+// RabbitMQ Topology
 app.Lifetime.ApplicationStarted.Register(async () =>
 {
     using var scope = app.Services.CreateScope();
@@ -80,5 +75,8 @@ app.MapPost("/checkout", async (CheckoutRequest req, IMessagePublisher publisher
     Log.Debug("Checkout requested, OrderId={OrderId}", orderId);
     return Results.Accepted($"/checkout/{orderId}");
 });
+
+app.UseSerilogRequestLogging();
+app.UseBugBucksWeb();
 
 app.Run();

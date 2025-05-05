@@ -1,19 +1,25 @@
 using System.Text;
 using BugBucks.Shared.Logging.Extensions;
 using BugBucks.Shared.VaultClient.Extensions;
+using BugBucks.Shared.Web.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PaymentService.Application.Interfaces;
 using PaymentService.Application.Services;
 using PaymentService.Infrastructure.Data;
 using PaymentService.Infrastructure.Repositories;
+using Serilog;
 using Serilog.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddVaultClient();
+builder.Services.AddAppLogging(builder.Configuration, builder.Environment);
 
-builder.AddAppLogging();
+builder.Host.UseSerilog();
+
+builder.Services.AddBugBucksWeb();
+
+builder.Services.AddVaultClient();
 
 
 // Configure DbContext with MySQL (Pomelo)
@@ -73,6 +79,9 @@ app.Use(async (context, next) =>
         await next();
     }
 });
+
+app.UseSerilogRequestLogging();
+app.UseBugBucksWeb();
 
 app.UseRouting();
 app.UseAuthentication();

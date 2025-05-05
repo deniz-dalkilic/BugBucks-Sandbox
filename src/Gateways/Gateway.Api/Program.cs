@@ -2,17 +2,20 @@ using System.Text;
 using BugBucks.Shared.Logging.Extensions;
 using BugBucks.Shared.VaultClient.Extensions;
 using BugBucks.Shared.VaultClient.Services;
+using BugBucks.Shared.Web.Extensions;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
-using Serilog.Context;
 
 // Configure builder and logging as early as possible
 var builder = WebApplication.CreateBuilder(args);
-builder.AddAppLogging();
 
-// Register services
+builder.Services.AddAppLogging(builder.Configuration, builder.Environment);
+
+builder.Host.UseSerilog();
+
+builder.Services.AddBugBucksWeb();
+
 builder.Services.AddVaultClient();
-builder.Services.AddSingleton<IVaultClientService, VaultClientService>();
 
 
 // Configure Authentication
@@ -61,15 +64,8 @@ Log.Information("Application starting up...");
 if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 
-// Use correlation ID middleware for logging
-app.Use(async (context, next) =>
-{
-    var correlationId = context.Request.Headers["X-Correlation-ID"].FirstOrDefault() ?? Guid.NewGuid().ToString();
-    using (LogContext.PushProperty("CorrelationId", correlationId))
-    {
-        await next();
-    }
-});
+app.UseSerilogRequestLogging();
+app.UseBugBucksWeb();
 
 app.UseRouting();
 app.UseAuthentication();

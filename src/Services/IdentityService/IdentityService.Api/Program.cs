@@ -1,6 +1,7 @@
 using System.Text;
 using BugBucks.Shared.Logging.Extensions;
 using BugBucks.Shared.VaultClient.Extensions;
+using BugBucks.Shared.Web.Extensions;
 using IdentityService.Api.Authorization;
 using IdentityService.Application.Interfaces;
 using IdentityService.Application.Services;
@@ -11,13 +12,19 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Serilog.Context;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
+builder.Services.AddAppLogging(builder.Configuration, builder.Environment);
+
+builder.Host.UseSerilog();
+
+builder.Services.AddBugBucksWeb();
+
 builder.Services.AddVaultClient();
 
-builder.AddAppLogging();
 
 if (builder.Environment.IsEnvironment("Test"))
 {
@@ -26,18 +33,17 @@ if (builder.Environment.IsEnvironment("Test"))
 }
 else
 {
-    // Configure DbContext with MySQL (Pomelo)
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
     builder.Services.AddDbContext<ApplicationDbContext>(opts =>
         opts.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 }
 
-// Configure ASP.NET Core Identity with ApplicationUser using integer primary key
+
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-// Configure JWT authentication (using IdentityService JWT settings)
+
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = "JwtBearer";
@@ -46,9 +52,8 @@ builder.Services.AddAuthentication(options =>
     .AddJwtBearer("JwtBearer", options =>
     {
         var jwtSection = builder.Configuration.GetSection("Jwt");
-        var key = jwtSection["Key"];
-        if (string.IsNullOrEmpty(key))
-            throw new ArgumentNullException("JWT signing key is not configured.");
+        var key = jwtSection["Key"] ?? throw new ArgumentNullException("JWT signing key is not configured.");
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -61,16 +66,16 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Dependency injection for application services and repository
 builder.Services.AddScoped<IApplicationUserRepository, ApplicationUserRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IApplicationUserService, ApplicationUserService>();
 
-// Register the custom authorization policy and handler before building the app
+
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("OwnerOrAdmin", policy =>
@@ -81,6 +86,7 @@ builder.Services.AddAuthorization(options =>
 });
 builder.Services.AddSingleton<IAuthorizationHandler, OwnerOrAdminHandler>();
 
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -90,11 +96,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Seed default roles (User, Admin, Manager, Support, Customer)
+
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
-
     var roleNames = new[] { "User", "Admin", "Manager", "Support", "Customer" };
 
     foreach (var roleName in roleNames)
@@ -102,15 +107,8 @@ using (var scope = app.Services.CreateScope())
             await roleManager.CreateAsync(new IdentityRole<int>(roleName));
 }
 
-// Correlation ID middleware for logging
-app.Use(async (context, next) =>
-{
-    var correlationId = context.Request.Headers["X-Correlation-ID"].FirstOrDefault() ?? Guid.NewGuid().ToString();
-    using (LogContext.PushProperty("CorrelationId", correlationId))
-    {
-        await next();
-    }
-});
+app.UseSerilogRequestLogging();
+app.UseBugBucksWeb();
 
 app.UseRouting();
 app.UseAuthentication();

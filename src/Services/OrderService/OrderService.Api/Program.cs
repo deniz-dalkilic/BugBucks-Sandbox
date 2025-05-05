@@ -1,5 +1,6 @@
 using BugBucks.Shared.Logging.Extensions;
 using BugBucks.Shared.VaultClient.Extensions;
+using BugBucks.Shared.Web.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -8,13 +9,18 @@ using OrderService.Application.Interfaces;
 using OrderService.Application.Services;
 using OrderService.Infrastructure.Data;
 using OrderService.Infrastructure.Repositories;
+using Serilog;
 using Serilog.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load Vault secrets
+builder.Services.AddAppLogging(builder.Configuration, builder.Environment);
+
+builder.Host.UseSerilog();
+
+builder.Services.AddBugBucksWeb();
+
 builder.Services.AddVaultClient();
-builder.AddAppLogging();
 
 // Configure DbContext with MySQL using Pomelo
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -79,6 +85,9 @@ app.Use(async (context, next) =>
         await next();
     }
 });
+
+app.UseSerilogRequestLogging();
+app.UseBugBucksWeb();
 
 app.UseRouting();
 app.UseAuthentication();

@@ -1,24 +1,20 @@
 using BugBucks.Shared.Logging.Interfaces;
 using BugBucks.Shared.Logging.Logging;
-using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Serilog;
+using Microsoft.Extensions.Hosting;
 
 namespace BugBucks.Shared.Logging.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-    public static WebApplicationBuilder AddAppLogging(this WebApplicationBuilder builder)
+    public static IServiceCollection AddAppLogging(this IServiceCollection services, IConfiguration cfg,
+        IHostEnvironment env)
     {
-        // Configure Serilog from configuration
-        LoggerConfigurator.ConfigureLogger(builder.Configuration, builder.Environment);
+        services.AddSingleton(typeof(IAppLogger<>), typeof(AppLogger<>));
 
-        // Replace default logging
-        builder.Host.UseSerilog();
+        LoggerConfigurator.ConfigureLogger(cfg, env);
 
-        // Register IAppLogger<T>
-        builder.Services.AddSingleton(typeof(IAppLogger<>), typeof(AppLogger<>));
-
-        return builder;
+        return services;
     }
 }

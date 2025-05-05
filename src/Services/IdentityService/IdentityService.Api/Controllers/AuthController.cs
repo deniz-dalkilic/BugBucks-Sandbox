@@ -1,3 +1,4 @@
+using BugBucks.Shared.Logging.Interfaces;
 using IdentityService.Api.Models;
 using IdentityService.Application.Interfaces;
 using IdentityService.Domain.Models;
@@ -11,6 +12,7 @@ namespace IdentityService.Api.Controllers;
 [ApiController]
 public class AuthController : ControllerBase
 {
+    private readonly IAppLogger<AuthController> _logger;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly ITokenService _tokenService;
     private readonly UserManager<ApplicationUser> _userManager;
@@ -18,7 +20,8 @@ public class AuthController : ControllerBase
     public AuthController(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
-        ITokenService tokenService)
+        ITokenService tokenService,
+        IAppLogger<AuthController> logger)
     {
         _userManager = userManager;
         _signInManager = signInManager;
@@ -55,6 +58,7 @@ public class AuthController : ControllerBase
     {
         if (string.IsNullOrEmpty(request.UserNameOrEmail) || string.IsNullOrEmpty(request.Password))
             return BadRequest("UserNameOrEmail and Password are required.");
+
 
         ApplicationUser user = null;
         if (request.UserNameOrEmail.Contains("@"))
