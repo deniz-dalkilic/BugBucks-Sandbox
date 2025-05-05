@@ -1,7 +1,11 @@
-path "secret/data/gateway/kv/dev" {
+path "auth/token/lookup-self" {
+  capabilities = ["read"]
+}
+
+path "gateway/data/*" {
   capabilities = ["read", "list"]
 }
 
-path "secret/metadata/gateway/kv/dev" {
+path "gateway/metadata/*" {
   capabilities = ["list"]
 }

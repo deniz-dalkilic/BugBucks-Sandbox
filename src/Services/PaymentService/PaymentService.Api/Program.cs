@@ -1,6 +1,6 @@
 using System.Text;
 using BugBucks.Shared.Logging.Extensions;
-using BugBucks.Shared.VaultClient.Extensions;
+using BugBucks.Shared.Vault.Extensions;
 using BugBucks.Shared.Web.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;

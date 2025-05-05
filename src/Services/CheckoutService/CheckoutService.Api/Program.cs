@@ -3,7 +3,7 @@ using BugBucks.Shared.Messaging.Abstractions.Messaging;
 using BugBucks.Shared.Messaging.Contracts.Events;
 using BugBucks.Shared.Messaging.Extensions;
 using BugBucks.Shared.Messaging.Infrastructure.RabbitMq;
-using BugBucks.Shared.VaultClient.Extensions;
+using BugBucks.Shared.Vault.Extensions;
 using BugBucks.Shared.Web.Extensions;
 using CheckoutService.Api.HostedServices;
 using CheckoutService.Application.Models;

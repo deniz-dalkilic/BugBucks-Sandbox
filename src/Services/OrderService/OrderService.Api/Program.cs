@@ -1,5 +1,5 @@
 using BugBucks.Shared.Logging.Extensions;
-using BugBucks.Shared.VaultClient.Extensions;
+using BugBucks.Shared.Vault.Extensions;
 using BugBucks.Shared.Web.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;

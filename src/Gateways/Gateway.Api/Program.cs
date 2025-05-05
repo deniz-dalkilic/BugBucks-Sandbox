@@ -1,7 +1,7 @@
 using System.Text;
 using BugBucks.Shared.Logging.Extensions;
-using BugBucks.Shared.VaultClient.Extensions;
-using BugBucks.Shared.VaultClient.Services;
+using BugBucks.Shared.Vault.Extensions;
+using BugBucks.Shared.Vault.Services;
 using BugBucks.Shared.Web.Extensions;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
@@ -77,7 +77,7 @@ app.MapReverseProxy();
 // Retrieve Vault secrets using the application's DI container
 using (var scope = app.Services.CreateScope())
 {
-    var vaultService = scope.ServiceProvider.GetRequiredService<IVaultClientService>();
+    var vaultService = scope.ServiceProvider.GetRequiredService<IVaultService>();
 
     try
     {

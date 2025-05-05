@@ -1,7 +1,7 @@
-using BugBucks.Shared.VaultClient.Services;
+using BugBucks.Shared.Vault.Services;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace BugBucks.Shared.VaultClient.Extensions;
+namespace BugBucks.Shared.Vault.Extensions;
 
 /// <summary>
 ///     Provides extension methods to register Vault client services.
@@ -15,7 +15,7 @@ public static class ServiceCollectionExtensions
     /// <returns>The updated service collection.</returns>
     public static IServiceCollection AddVaultClient(this IServiceCollection services)
     {
-        services.AddSingleton<IVaultClientService, VaultClientService>();
+        services.AddSingleton<IVaultService, VaultService>();
         return services;
     }
 }
