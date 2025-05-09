@@ -2,6 +2,7 @@ using BugBucks.Shared.Logging.Extensions;
 using BugBucks.Shared.Messaging.Abstractions.Messaging;
 using BugBucks.Shared.Messaging.Contracts.Events;
 using BugBucks.Shared.Messaging.Extensions;
+using BugBucks.Shared.Messaging.Health;
 using BugBucks.Shared.Messaging.Infrastructure.RabbitMq;
 using BugBucks.Shared.Observability.Extensions;
 using BugBucks.Shared.Vault.Extensions;
@@ -29,7 +30,7 @@ builder.Services.AddBugBucksObservability(builder.Configuration, "checkout-servi
 builder.Services.AddVaultClient();
 
 // Messaging
-builder.Services.AddSharedMessaging(builder.Configuration);
+builder.Services.AddRabbitMqMessaging(builder.Configuration);
 
 // EF Core
 var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -44,6 +45,9 @@ builder.Services.AddScoped<ICheckoutSagaOrchestrator, CheckoutSagaOrchestrator>(
 builder.Services.AddHostedService<CheckoutSagaConsumer>();
 builder.Services.AddHostedService<OutboxProcessor>();
 
+builder.Services
+    .AddHealthChecks()
+    .AddCheck<RabbitMqHealthCheck>("rabbitmq");
 
 var app = builder.Build();
 
@@ -83,5 +87,6 @@ app.MapPost("/checkout", async (CheckoutRequest req, IMessagePublisher publisher
     return Results.Accepted($"/checkout/{orderId}");
 });
 
+app.MapHealthChecks("/health");
 
 app.Run();

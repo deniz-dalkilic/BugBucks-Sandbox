@@ -16,4 +16,10 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IMessageConsumer, RabbitMqConsumer>();
         return services;
     }
+
+    public static IServiceCollection AddRabbitMqMessaging(this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        return AddSharedMessaging(services, configuration);
+    }
 }
