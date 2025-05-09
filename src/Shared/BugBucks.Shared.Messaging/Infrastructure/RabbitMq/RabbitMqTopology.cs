@@ -26,7 +26,19 @@ public static class RabbitMqTopology
 
     public static async Task DeclareQueueAsync(IChannel channel, string queueName, string routingKey)
     {
-        await channel.QueueDeclareAsync(queueName, true, false, false, null);
-        await channel.QueueBindAsync(queueName, ExchangeName, routingKey, null);
+        var dlxExchange = queueName + ".dlx";
+        var dlqQueue = queueName + ".dlq";
+
+        await channel.ExchangeDeclareAsync(dlxExchange, ExchangeType.Fanout, true);
+        await channel.QueueDeclareAsync(dlqQueue, true, false, false);
+        await channel.QueueBindAsync(dlqQueue, dlxExchange, "");
+
+        var args = new Dictionary<string, object>
+        {
+            { "x-dead-letter-exchange", dlxExchange }
+        };
+
+        await channel.QueueDeclareAsync(queueName, true, false, false, args);
+        await channel.QueueBindAsync(queueName, ExchangeName, routingKey);
     }
 }

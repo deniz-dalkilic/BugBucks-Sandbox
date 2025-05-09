@@ -1,40 +1,68 @@
-using System;
 using System.Text.Json;
-using System.Threading.Tasks;
+using BugBucks.Shared.Messaging.Abstractions.Messaging;
+using BugBucks.Shared.Messaging.Retry;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using BugBucks.Shared.Messaging.Abstractions.Messaging;
 
-namespace BugBucks.Shared.Messaging.Infrastructure.RabbitMq
+namespace BugBucks.Shared.Messaging.Infrastructure.RabbitMq;
+
+internal class RabbitMqConsumer : IMessageConsumer
 {
-    internal class RabbitMqConsumer : IMessageConsumer
+    private readonly IRabbitMqConnectionFactory _factory;
+    private readonly ILogger<RabbitMqConsumer> _logger;
+    private readonly MessageRetryPolicy _retryPolicy;
+
+    public RabbitMqConsumer(IRabbitMqConnectionFactory factory, MessageRetryPolicy retryPolicy,
+        ILogger<RabbitMqConsumer> logger)
     {
-        private readonly IRabbitMqConnectionFactory _factory;
+        _factory = factory;
+        _retryPolicy = retryPolicy;
+        _logger = logger;
+    }
 
-        public RabbitMqConsumer(IRabbitMqConnectionFactory factory) => _factory = factory;
+    public async Task SubscribeAsync<TEvent>(Func<TEvent, Task> handler) where TEvent : class
+    {
+        var connection = await _factory.CreateConnectionAsync();
+        var channel = await connection.CreateChannelAsync();
 
-        public async Task SubscribeAsync<TEvent>(Func<TEvent, Task> handler) where TEvent : class
+        await RabbitMqTopology.DeclareAsync(channel);
+
+        var queueName = RabbitMqTopology.QueuePrefix + typeof(TEvent).Name;
+        var consumer = new AsyncEventingBasicConsumer(channel);
+
+        consumer.ReceivedAsync += async (sender, ea) =>
         {
-            var connection = await _factory.CreateConnectionAsync();
-            var channel = await connection.CreateChannelAsync();
+            var body = ea.Body.ToArray();
+            var evt = JsonSerializer.Deserialize<TEvent>(body);
+            var tag = ea.DeliveryTag;
 
-            await RabbitMqTopology.DeclareAsync(channel);
-
-            var queueName = RabbitMqTopology.QueuePrefix + typeof(TEvent).Name;
-            var consumer = new AsyncEventingBasicConsumer(channel);
-
-            consumer.ReceivedAsync += async (sender, ea) =>
+            if (evt is null)
             {
-                var body = ea.Body.ToArray();
-                var evt = JsonSerializer.Deserialize<TEvent>(body);
-                if (evt != null)
-                {
-                    await handler(evt);
-                    await channel.BasicAckAsync(deliveryTag: ea.DeliveryTag, multiple: false);
-                }
-            };
+                _logger.LogWarning("Received null payload for {Event}", typeof(TEvent).Name);
+                await channel.BasicNackAsync(tag, false, false);
+                return;
+            }
 
-            await channel.BasicConsumeAsync(queue: queueName, autoAck: false, consumer: consumer);
-        }
+            try
+            {
+                await _retryPolicy.ExecuteAsync(
+                    () => handler(evt),
+                    _logger,
+                    typeof(TEvent).Name
+                );
+
+
+                await channel.BasicAckAsync(tag, false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Message processing failed irrecoverably, nacking to DLQ");
+                await channel.BasicNackAsync(tag, false, false);
+            }
+        };
+
+
+        await channel.BasicConsumeAsync(queueName, false, consumer);
     }
 }
