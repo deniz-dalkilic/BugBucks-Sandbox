@@ -1,13 +1,13 @@
+using BugBucks.Shared.Messaging.Infrastructure.RabbitMq;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using RabbitMQ.Client;
 
 namespace BugBucks.Shared.Messaging.Health;
 
 public class RabbitMqHealthCheck : IHealthCheck
 {
-    private readonly IConnectionFactory _factory;
+    private readonly IRabbitMqConnectionFactory _factory;
 
-    public RabbitMqHealthCheck(IConnectionFactory factory)
+    public RabbitMqHealthCheck(IRabbitMqConnectionFactory factory)
     {
         _factory = factory;
     }
@@ -16,7 +16,7 @@ public class RabbitMqHealthCheck : IHealthCheck
     {
         try
         {
-            await using var conn = await _factory.CreateConnectionAsync(token);
+            using var conn = _factory.CreateConnectionAsync().GetAwaiter().GetResult();
             if (conn.IsOpen)
                 return HealthCheckResult.Healthy("RabbitMQ connection OK");
         }
