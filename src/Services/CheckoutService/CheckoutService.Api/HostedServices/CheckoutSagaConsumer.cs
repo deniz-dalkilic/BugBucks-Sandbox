@@ -35,23 +35,16 @@ public class CheckoutSagaConsumer : BackgroundService
         await Task.Delay(Timeout.Infinite, cancellationToken);
     }
 
-    private async Task HandleAsync<TEvent>(TEvent @event) where TEvent : class
+    private Task HandleAsync<TEvent>(TEvent @event) where TEvent : class
     {
-        try
-        {
-            using var scope = _scopeFactory.CreateScope();
-            var orchestrator = scope.ServiceProvider
-                .GetRequiredService<ICheckoutSagaOrchestrator>();
+        using var scope = _scopeFactory.CreateScope();
+        var orchestrator = scope.ServiceProvider
+            .GetRequiredService<ICheckoutSagaOrchestrator>();
 
-            var eventName = typeof(TEvent).Name;
-            var orderId = ((dynamic)@event).OrderId as Guid?;
-            _logger.LogDebug("Received {Event} for Order={OrderId}", eventName, orderId);
+        var eventName = typeof(TEvent).Name;
+        var orderId = ((dynamic)@event).OrderId as Guid?;
+        _logger.LogDebug("Received {Event} for Order={OrderId}", eventName, orderId);
 
-            await ((dynamic)orchestrator).HandleAsync((dynamic)@event);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error handling saga event {Event}", typeof(TEvent).Name);
-        }
+        return ((dynamic)orchestrator).HandleAsync((dynamic)@event);
     }
 }
