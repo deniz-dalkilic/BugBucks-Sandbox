@@ -1,5 +1,6 @@
 using System.Text;
 using BugBucks.Shared.Logging.Extensions;
+using BugBucks.Shared.Observability.Extensions;
 using BugBucks.Shared.Vault.Extensions;
 using BugBucks.Shared.Vault.Services;
 using BugBucks.Shared.Web.Extensions;
@@ -17,6 +18,7 @@ builder.Services.AddBugBucksWeb();
 
 builder.Services.AddVaultClient();
 
+builder.Services.AddBugBucksObservability(builder.Configuration, "gateway-api");
 
 // Configure Authentication
 builder.Services.AddAuthentication(options =>
@@ -66,6 +68,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseSerilogRequestLogging();
 app.UseBugBucksWeb();
+app.UseBugBucksObservability();
 
 app.UseRouting();
 app.UseAuthentication();
@@ -97,5 +100,11 @@ using (var scope = app.Services.CreateScope())
         Log.Error(ex, "Error retrieving Vault secrets for API Gateway.");
     }
 }
+
+app.MapGet("/test", async () =>
+{
+    Log.Information("It works");
+    return Results.Ok("Hello from Gateway API!");
+});
 
 app.Run();

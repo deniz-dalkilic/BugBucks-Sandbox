@@ -1,4 +1,5 @@
 using BugBucks.Shared.Logging.Extensions;
+using BugBucks.Shared.Observability.Extensions;
 using BugBucks.Shared.Vault.Extensions;
 using BugBucks.Shared.Web.Extensions;
 using Microsoft.AspNetCore.Authorization;
@@ -19,6 +20,8 @@ builder.Services.AddAppLogging(builder.Configuration, builder.Environment);
 builder.Host.UseSerilog();
 
 builder.Services.AddBugBucksWeb();
+
+builder.Services.AddBugBucksObservability(builder.Configuration, "order-service");
 
 builder.Services.AddVaultClient();
 
@@ -88,6 +91,7 @@ app.Use(async (context, next) =>
 
 app.UseSerilogRequestLogging();
 app.UseBugBucksWeb();
+app.UseBugBucksObservability();
 
 app.UseRouting();
 app.UseAuthentication();

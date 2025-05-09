@@ -1,5 +1,6 @@
 using System.Text;
 using BugBucks.Shared.Logging.Extensions;
+using BugBucks.Shared.Observability.Extensions;
 using BugBucks.Shared.Vault.Extensions;
 using BugBucks.Shared.Web.Extensions;
 using IdentityService.Api.Authorization;
@@ -22,6 +23,8 @@ builder.Services.AddAppLogging(builder.Configuration, builder.Environment);
 builder.Host.UseSerilog();
 
 builder.Services.AddBugBucksWeb();
+
+builder.Services.AddBugBucksObservability(builder.Configuration, "identity-service");
 
 builder.Services.AddVaultClient();
 
@@ -109,6 +112,8 @@ using (var scope = app.Services.CreateScope())
 
 app.UseSerilogRequestLogging();
 app.UseBugBucksWeb();
+app.UseBugBucksObservability();
+
 
 app.UseRouting();
 app.UseAuthentication();

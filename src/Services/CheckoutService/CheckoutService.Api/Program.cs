@@ -3,6 +3,7 @@ using BugBucks.Shared.Messaging.Abstractions.Messaging;
 using BugBucks.Shared.Messaging.Contracts.Events;
 using BugBucks.Shared.Messaging.Extensions;
 using BugBucks.Shared.Messaging.Infrastructure.RabbitMq;
+using BugBucks.Shared.Observability.Extensions;
 using BugBucks.Shared.Vault.Extensions;
 using BugBucks.Shared.Web.Extensions;
 using CheckoutService.Api.HostedServices;
@@ -22,6 +23,9 @@ builder.Host.UseSerilog();
 
 builder.Services.AddBugBucksWeb();
 
+builder.Services.AddBugBucksObservability(builder.Configuration, "checkout-service");
+
+
 builder.Services.AddVaultClient();
 
 // Messaging
@@ -40,7 +44,6 @@ builder.Services.AddScoped<ICheckoutSagaOrchestrator, CheckoutSagaOrchestrator>(
 builder.Services.AddHostedService<CheckoutSagaConsumer>();
 builder.Services.AddHostedService<OutboxProcessor>();
 
-builder.Services.AddBugBucksWeb();
 
 var app = builder.Build();
 
@@ -50,6 +53,10 @@ Log.Information("Application starting up...");
 // Dev exception page
 if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
+
+app.UseSerilogRequestLogging();
+app.UseBugBucksWeb();
+app.UseBugBucksObservability();
 
 // RabbitMQ Topology
 app.Lifetime.ApplicationStarted.Register(async () =>
@@ -76,7 +83,5 @@ app.MapPost("/checkout", async (CheckoutRequest req, IMessagePublisher publisher
     return Results.Accepted($"/checkout/{orderId}");
 });
 
-app.UseSerilogRequestLogging();
-app.UseBugBucksWeb();
 
 app.Run();

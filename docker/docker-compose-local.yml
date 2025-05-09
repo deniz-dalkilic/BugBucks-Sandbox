@@ -101,7 +101,117 @@ services:
       RABBITMQ_DEFAULT_PASS: guest
     networks:
       - bugbucks-net
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib
+    container_name: otel-collector
+    command: [ "--config=/etc/otel-collector-config.yml" ]
+    volumes:
+      - ./otel-collector-config.yml:/etc/otel-collector-config.yml:ro
+    ports:
+      - "4317:4317"     # OTLP gRPC
+      - "4318:4318"     # OTLP HTTP 
+      - "8889:8889"
+    networks:
+      - bugbucks-net
+    depends_on: [ tempo, prometheus ]
 
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    networks:
+      - bugbucks-net
+
+  tempo:
+    image: grafana/tempo
+    container_name: tempo
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - tempo_data:/tmp/tempo
+      - ./tempo.yaml:/etc/tempo.yaml:ro
+    ports:
+      - "3200:3200"
+    networks:
+      - bugbucks-net
+
+  #loki:
+  #  image: grafana/loki
+  #  container_name: loki
+  #  command: [ "-config.file=/etc/loki/local-config.yaml" ]
+  #  ports:
+  #    - "3100:3100"
+  #  networks:
+  #    - bugbucks-net
+  #  volumes:
+  #    - loki_data:/loki
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    #depends_on: [ prometheus, tempo, loki ]
+    depends_on: [ prometheus, tempo ]
+    networks:
+      - bugbucks-net
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./provisioning/:/etc/grafana/provisioning
+  
+  gateway.api:
+    build:
+      context: ../
+      dockerfile: src/Gateways/Gateway.Api/Dockerfile
+    container_name: bugbucks-gateway
+    networks:
+      - bugbucks-net
+    ports:
+      - "6000:8080"
+  
+  identityservice:
+    build:
+      context: ../
+      dockerfile: src/Services/IdentityService/IdentityService.Api/Dockerfile
+    container_name: bugbucks-identity-service
+    networks:
+      - bugbucks-net
+    ports:
+      - "6001:8080"
+  
+  checkoutservice:
+    build:
+      context: ../
+      dockerfile: src/Services/CheckoutService/CheckoutService.Api/Dockerfile
+    container_name: bugbucks-checkout-service
+    networks:
+      - bugbucks-net
+    ports:
+      - "6002:8080"
+
+  orderservice:
+    build:
+      context: ../
+      dockerfile: src/Services/OrderService/OrderService.Api/Dockerfile
+    container_name: bugbucks-order-service
+    networks:
+      - bugbucks-net
+    ports:
+      - "6003:8080"
+
+  paymentservice:
+    build:
+      context: ../
+      dockerfile: src/Services/PaymentService/PaymentService.Api/Dockerfile
+    container_name: bugbucks-payment-service
+    networks:
+      - bugbucks-net
+    ports:
+      - "6004:8080"
 networks:
   bugbucks-net:
     driver: bridge
@@ -109,5 +219,7 @@ networks:
 volumes:
   mariadb_data:
   vault_data:
-
-      
+  prometheus_data:
+  tempo_data:
+  loki_data:
+  grafana_data:
