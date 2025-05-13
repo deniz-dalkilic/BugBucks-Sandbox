@@ -3,14 +3,17 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace CheckoutService.Infrastructure.Migrations
+namespace CheckoutService.Infrastructure.Data.Migrations.Outbox
 {
     /// <inheritdoc />
-    public partial class AddOutboxMessages : Migration
+    public partial class InitOutbox : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AlterDatabase()
+                .Annotation("MySql:CharSet", "utf8mb4");
+
             migrationBuilder.CreateTable(
                 name: "OutboxMessages",
                 columns: table => new

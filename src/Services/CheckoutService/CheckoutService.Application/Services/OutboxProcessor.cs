@@ -35,7 +35,7 @@ public class OutboxProcessor : BackgroundService
             while (!stoppingToken.IsCancellationRequested)
             {
                 using var scope = _scopeFactory.CreateScope();
-                var db = scope.ServiceProvider.GetRequiredService<CheckoutSagaDbContext>();
+                var db = scope.ServiceProvider.GetRequiredService<CheckoutOutboxDbContext>();
 
                 var pending = db.OutboxMessages
                     .Where(x => !x.Processed)

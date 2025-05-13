@@ -4,19 +4,16 @@ using CheckoutService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace CheckoutService.Infrastructure.Migrations
+namespace CheckoutService.Infrastructure.Data.Migrations.Outbox
 {
-    [DbContext(typeof(CheckoutSagaDbContext))]
-    [Migration("20250424125140_AddOutboxMessages")]
-    partial class AddOutboxMessages
+    [DbContext(typeof(CheckoutOutboxDbContext))]
+    partial class CheckoutOutboxDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -24,29 +21,6 @@ namespace CheckoutService.Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
-
-            modelBuilder.Entity("CheckoutService.Domain.Entities.CheckoutSaga", b =>
-                {
-                    b.Property<Guid>("OrderId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("LastError")
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime>("LastUpdatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("State")
-                        .HasColumnType("int");
-
-                    b.HasKey("OrderId");
-
-                    b.ToTable("CheckoutSagas", (string)null);
-                });
 
             modelBuilder.Entity("CheckoutService.Infrastructure.Entities.OutboxMessage", b =>
                 {

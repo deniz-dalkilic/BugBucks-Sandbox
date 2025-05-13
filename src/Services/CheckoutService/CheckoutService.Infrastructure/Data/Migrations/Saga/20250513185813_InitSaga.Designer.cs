@@ -9,11 +9,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace CheckoutService.Infrastructure.Migrations
+namespace CheckoutService.Infrastructure.Data.Migrations.Saga
 {
     [DbContext(typeof(CheckoutSagaDbContext))]
-    [Migration("20250421151843_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250513185813_InitSaga")]
+    partial class InitSaga
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

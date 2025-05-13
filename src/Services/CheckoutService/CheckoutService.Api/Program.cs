@@ -33,9 +33,14 @@ builder.Services.AddVaultClient();
 builder.Services.AddRabbitMqMessaging(builder.Configuration);
 
 // EF Core
-var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
+var connSaga = builder.Configuration.GetConnectionString("SagaDbConnection");
 builder.Services.AddDbContext<CheckoutSagaDbContext>(opts =>
-    opts.UseMySql(connStr, ServerVersion.AutoDetect(connStr)));
+    opts.UseMySql(connSaga, ServerVersion.AutoDetect(connSaga)));
+
+var connOutbox = builder.Configuration.GetConnectionString("OutboxDbConnection");
+
+builder.Services.AddDbContext<CheckoutOutboxDbContext>(opts =>
+    opts.UseMySql(connOutbox, ServerVersion.AutoDetect(connOutbox)));
 
 // Repo & Orchestrator
 builder.Services.AddScoped<ICheckoutSagaRepository, CheckoutSagaRepository>();

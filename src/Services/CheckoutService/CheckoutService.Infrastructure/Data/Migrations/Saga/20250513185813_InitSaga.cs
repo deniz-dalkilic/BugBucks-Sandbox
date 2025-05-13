@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace CheckoutService.Infrastructure.Migrations
+namespace CheckoutService.Infrastructure.Data.Migrations.Saga
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitSaga : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

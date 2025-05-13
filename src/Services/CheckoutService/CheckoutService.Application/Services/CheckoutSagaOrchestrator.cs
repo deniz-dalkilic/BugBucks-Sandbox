@@ -14,13 +14,13 @@ namespace CheckoutService.Application.Services;
 /// </summary>
 public class CheckoutSagaOrchestrator : ICheckoutSagaOrchestrator
 {
-    private readonly CheckoutSagaDbContext _db;
+    private readonly CheckoutOutboxDbContext _db;
     private readonly IAppLogger<CheckoutSagaOrchestrator> _logger;
     private readonly ICheckoutSagaRepository _repo;
 
     public CheckoutSagaOrchestrator(
         ICheckoutSagaRepository repo,
-        CheckoutSagaDbContext db,
+        CheckoutOutboxDbContext db,
         IAppLogger<CheckoutSagaOrchestrator> logger)
     {
         _repo = repo;

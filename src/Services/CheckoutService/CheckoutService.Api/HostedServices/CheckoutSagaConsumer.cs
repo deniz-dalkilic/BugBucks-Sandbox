@@ -35,7 +35,7 @@ public class CheckoutSagaConsumer : BackgroundService
         await Task.Delay(Timeout.Infinite, cancellationToken);
     }
 
-    private Task HandleAsync<TEvent>(TEvent @event) where TEvent : class
+    private async Task HandleAsync<TEvent>(TEvent @event) where TEvent : class
     {
         using var scope = _scopeFactory.CreateScope();
         var orchestrator = scope.ServiceProvider
@@ -45,6 +45,6 @@ public class CheckoutSagaConsumer : BackgroundService
         var orderId = ((dynamic)@event).OrderId as Guid?;
         _logger.LogDebug("Received {Event} for Order={OrderId}", eventName, orderId);
 
-        return ((dynamic)orchestrator).HandleAsync((dynamic)@event);
+        await ((dynamic)orchestrator).HandleAsync((dynamic)@event);
     }
 }
