@@ -14,7 +14,7 @@ scrape_configs:
           - 'bugbucks-checkout-service:8080'
           - 'bugbucks-order-service:8080'
           - 'bugbucks-payment-service:8080'
-
+         
   - job_name: 'prometheus'
     static_configs:
       - targets: [ 'prometheus:9090' ]
