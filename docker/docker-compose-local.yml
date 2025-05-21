@@ -3,7 +3,6 @@ services:
   mariadb:
     image: mariadb:11.7
     container_name: mariadb
-    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: IdentityDb
@@ -46,23 +45,6 @@ services:
       - bugbucks-net
   
   
-  #  loggingservice:
-  #    build:
-  #      context: ../
-  #      dockerfile: ./src/Services/LoggingService/LoggingService.Api/Dockerfile
-  #
-  #    container_name: loggingservice
-  #    ports:
-  #      - "8080:8080"
-  #    #environment:
-  #    #  - ASPNETCORE_ENVIRONMENT=Development
-  #    depends_on:
-  #      elasticsearch:
-  #        condition: service_healthy  # Wait for Elasticsearch status to become HEALTHY 
-  #      
-  #    networks:
-  #      - bugbucks-net
-
   vault:
     image: hashicorp/vault:latest
     container_name: vault

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -18,6 +19,9 @@ public static class ServiceCollectionExtensions
     {
         Log.Logger = Log.Logger.ForContext(ServiceNameKey, serviceName);
 
+        var otlpEndpoint = new Uri(cfg["OpenTelemetry:OtlpEndpoint"]
+                                   ?? "http://otel-collector:4317");
+
         services.AddOpenTelemetry()
             .ConfigureResource(r => r
                 .AddService(serviceName,
@@ -28,10 +32,7 @@ public static class ServiceCollectionExtensions
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
                     .AddEntityFrameworkCoreInstrumentation()
-                    .AddOtlpExporter(opt =>
-                    {
-                        opt.Endpoint = new Uri(cfg["OpenTelemetry:OtlpEndpoint"] ?? "http://collector:4317");
-                    });
+                    .AddOtlpExporter(opt => opt.Endpoint = otlpEndpoint);
             })
             .WithMetrics(builder =>
             {
@@ -39,7 +40,13 @@ public static class ServiceCollectionExtensions
                     .AddAspNetCoreInstrumentation()
                     .AddRuntimeInstrumentation()
                     .AddProcessInstrumentation()
-                    .AddPrometheusExporter();
+                    .AddPrometheusExporter()
+                    .AddOtlpExporter(opt => opt.Endpoint = otlpEndpoint);
+            })
+            .WithLogging(builder =>
+            {
+                builder
+                    .AddOtlpExporter(opt => opt.Endpoint = otlpEndpoint);
             });
 
         return services;

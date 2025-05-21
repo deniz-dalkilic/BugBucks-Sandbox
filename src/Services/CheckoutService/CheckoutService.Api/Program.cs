@@ -89,6 +89,7 @@ app.MapPost("/checkout", async (CheckoutRequest req, IMessagePublisher publisher
         req.CustomerId,
         req.TotalAmount));
     Log.Debug("Checkout requested, OrderId={OrderId}", orderId);
+
     return Results.Accepted($"/checkout/{orderId}");
 });
 

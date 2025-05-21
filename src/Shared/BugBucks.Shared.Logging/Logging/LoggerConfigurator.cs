@@ -6,12 +6,26 @@ using Elastic.Serilog.Sinks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using Serilog.Debugging;
 using Serilog.Events;
 
 public static class LoggerConfigurator
 {
     public static void ConfigureLogger(IConfiguration config, IHostEnvironment env)
     {
+        SelfLog.Enable(msg => Console.WriteLine(msg));
+
+        string MapEnvironmentName(string environmentName)
+        {
+            return environmentName.ToLowerInvariant() switch
+            {
+                "development" => "dev",
+                "staging" => "stg",
+                "production" => "prd",
+                _ => environmentName.ToLowerInvariant()
+            };
+        }
+
         if (env.IsEnvironment("Test"))
         {
             Log.Logger = new LoggerConfiguration()
@@ -21,17 +35,24 @@ public static class LoggerConfigurator
             return;
         }
 
+        var esOpts = config.GetSection("ElasticsearchOptions").Get<ElasticsearchOptions>()!;
+        var seqOpts = config.GetSection("Seq").Get<SeqOptions>()!;
+        var otelOpts = config.GetSection("OpenTelemetry").Get<OpenTelemetryOptions>()!;
+
 
         var defaultLevel = config.GetValue("Logging:MinimumLevel", LogEventLevel.Debug);
-        var elasticLevel = config.GetValue("ElasticsearchOptions:MinimumLevel", defaultLevel);
-        var seqLevel = config.GetValue("Seq:MinimumLevel", defaultLevel);
+        var elasticLevel = Enum.Parse<LogEventLevel>(esOpts.MinimumLevel, true);
+        var seqLevel = Enum.Parse<LogEventLevel>(seqOpts.MinimumLevel, true);
+        var otelLevel = Enum.Parse<LogEventLevel>(otelOpts.Logging.MinimumLevel, true);
+
+
+        var environmentCode = MapEnvironmentName(env.EnvironmentName);
 
         var logger = new LoggerConfiguration()
             .MinimumLevel.Is(defaultLevel)
             .Enrich.FromLogContext()
             .WriteTo.Console(defaultLevel);
 
-        var esOpts = config.GetSection("ElasticsearchOptions").Get<ElasticsearchOptions>()!;
         if (esOpts.Enabled && esOpts.NodeUris.Any())
         {
             var uris = esOpts.NodeUris.Select(u => new Uri(u)).ToArray();
@@ -51,11 +72,21 @@ public static class LoggerConfigurator
                 restrictedToMinimumLevel: elasticLevel);
         }
 
-        var seqOpts = config.GetSection("Seq").Get<SeqOptions>()!;
         if (seqOpts.Enabled && !string.IsNullOrWhiteSpace(seqOpts.ServerUrl))
             logger = logger.WriteTo.Seq(
                 seqOpts.ServerUrl,
                 seqLevel);
+
+
+        if (otelOpts.Logging.Enabled)
+            logger = logger.WriteTo.OpenTelemetry(
+                otelOpts.OtlpEndpoint,
+                restrictedToMinimumLevel: otelLevel,
+                resourceAttributes: new Dictionary<string, object>
+                {
+                    ["service.name"] = $"{environmentCode}.{env.ApplicationName}",
+                    ["deployment.environment"] = env.EnvironmentName
+                });
 
         Log.Logger = logger.CreateLogger();
     }
