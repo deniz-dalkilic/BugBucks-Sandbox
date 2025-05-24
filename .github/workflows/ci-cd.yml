@@ -75,7 +75,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-
+      
     strategy:
       fail-fast: false
       matrix:
@@ -102,18 +102,22 @@ jobs:
         with:
           buildkitd-flags: --debug
 
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build & push ${{ matrix.name }}
         uses: docker/build-push-action@v5
         with:
-          context: . 
+          context: .
           file: ${{ matrix.path }}/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          # build cache for faster subsequent builds
           cache-from: type=gha
           cache-to: type=gha,mode=max
           tags: |
             ghcr.io/${{ github.repository_owner }}/bugbucks-${{ matrix.name }}:${{ github.sha }}
             ghcr.io/${{ github.repository_owner }}/bugbucks-${{ matrix.name }}:latest
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
