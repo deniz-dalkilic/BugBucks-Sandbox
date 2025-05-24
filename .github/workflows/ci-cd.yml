@@ -115,3 +115,5 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/bugbucks-${{ matrix.name }}:${{ github.sha }}
             ghcr.io/${{ github.repository_owner }}/bugbucks-${{ matrix.name }}:latest
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
