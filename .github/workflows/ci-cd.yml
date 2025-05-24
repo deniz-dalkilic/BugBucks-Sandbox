@@ -74,8 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
-      
+
     strategy:
       fail-fast: false
       matrix:
@@ -102,14 +101,14 @@ jobs:
         with:
           buildkitd-flags: --debug
 
-      - name: Log in to GitHub Container Registry
+      - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build & push ${{ matrix.name }}
+      - name: Build & push ${{ matrix.name }} to Docker Hub
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -119,5 +118,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           tags: |
-            ghcr.io/${{ github.repository_owner }}/bugbucks-${{ matrix.name }}:${{ github.sha }}
-            ghcr.io/${{ github.repository_owner }}/bugbucks-${{ matrix.name }}:latest
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/bugbucks-${{ matrix.name }}:${{ github.sha }}
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/bugbucks-${{ matrix.name }}:latest
+  
